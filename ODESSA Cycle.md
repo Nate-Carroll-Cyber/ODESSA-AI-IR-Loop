@@ -1,4 +1,4 @@
-# ODESSA — AI Incident Response Loop
+# ODESSA — Agentic Input & Action Governance Framework
 
 **A defensive, auditable, agent-executable control pipeline**
 
@@ -539,9 +539,9 @@ stated value of the Protect Function.
 | **ID — Identify** | 1 Observation | Agent identity, manifests, capability declarations, and BOM map to ID.AM asset inventory (incl. detecting **shadow agents**, the agentic analogue of "shadow IT"). Stage 2–3 threat modeling maps to ID.RA. |
 | **PR — Protect** | 4 Source Validation, 5 Safeguard | ODESSA's center of gravity. Maps to PR.AA (least privilege / separation of duties, PR.AA-05), PR.PS (platform / sandbox), PR.DS (data integrity at-rest / in-transit / in-use). |
 | **DE — Detect** | 2 Detection (+ 1 telemetry) | Maps to DE.CM (continuous monitoring) and DE.AE (adverse-event analysis). ODESSA is an **event source**: its receipts and decision records are the structured feed into SIEM/SOAR correlation. |
-| **RS — Respond** | 3 Escalation; 5 Safeguard (BLOCK, kill-switch) | *Partial.* Stage 3 HITL routing maps to RS.MA (triage/prioritize/escalate); BLOCK + circuit-breakers map to RS.MI-01 (containment); owner-chain receipts feed RS.AN-06/07 (integrity & provenance of records and incident data). |
+| **RS — Respond** | 3 Escalation; 5 Safeguard (BLOCK, kill-switch); 6 Assessment | *Partial.* Stage 3 HITL routing maps to RS.MA (triage/prioritize/escalate); BLOCK + circuit-breakers map to RS.MI-01 (containment); owner-chain receipts feed RS.AN-06/07 (integrity & provenance of records and incident data). **Stage 6 covers the agent-behavioral portion of RS.AN-03 (root-cause analysis)** via explainability audits and delegation-chain cascade attribution; the environment-wide investigation, threat-actor attribution, and forensic chain-of-custody remain out of scope. |
 | **RC — Recover** | — | *Essentially absent.* ODESSA has no restoration, backup-integrity verification (RC.RP-03), or after-action reporting (RC.RP-06). |
-| **ID.IM — Improvement** | 6 Assessment | Strong alignment. Curated training, promotion gates, and drift detection are the continuous-improvement loop where lessons feed into and adjust all Functions at all times. |
+| **ID.IM — Improvement** | 6 Assessment | Strong alignment. Curated training, promotion gates, and drift detection are the continuous-improvement loop where lessons feed into and adjust all Functions at all times. RS.AN-03's recurrence-prevention note (identifying weaknesses so similar incidents are avoided) also lands here — Stage 6 straddles Respond-analysis and Improvement. |
 
 ## Two caveats built into this mapping
 
@@ -561,7 +561,11 @@ stated value of the Protect Function.
    - Respond communications track: notification, public/legal/regulatory
      reporting (RS.CO).
    - Eradication of persistence beyond runtime blocking (RS.MI-02).
-   - Root-cause investigation with chain-of-custody (RS.AN-03).
+   - Forensic investigation oriented to prosecution — formal evidence handling
+     and chain-of-custody (RS.AN-06/07) and environment-wide magnitude validation
+     across non-agent targets (RS.AN-08). *(Note: the agent-behavioral root cause
+     itself — RS.AN-03 — IS covered, in Stage 6 Assessment; what is missing is the
+     organizational/forensic investigation wrapper around it.)*
    - The entire Recover Function (RC.*).
    - **Tempo mismatch:** 800-61r3 assumes human-paced incidents; agentic cascades
      move faster. ODESSA's kill-switch / circuit-breakers (Stage 5) are the
