@@ -511,6 +511,84 @@ report these with that caveat.
 
 ---
 
+# 🏛️ Alignment with NIST SP 800-61r3 (CSF 2.0 Incident Response Profile)
+
+NIST SP 800-61r3 (*Incident Response Recommendations and Considerations for
+Cybersecurity Risk Management*, April 2025) is a **CSF 2.0 Community Profile** —
+not an architecture or a control set. It organizes incident-response
+recommendations around the six CSF 2.0 Functions: **Govern (GV), Identify (ID),
+Protect (PR), Detect (DE), Respond (RS), Recover (RC)**, with continuous
+Improvement (ID.IM) feeding all of them.
+
+ODESSA and SP 800-61r3 occupy **different points in the lifecycle and are
+complementary, not overlapping**. ODESSA is a runtime control-plane pipeline
+that governs a single agent interaction *before and during* execution; it is
+primarily a **Protect + Detect** instrument that operates *upstream of the
+incident-declaration line*. SP 800-61r3 is the **organizational incident-response
+program** that takes over once an adverse event becomes a declared incident and
+runs through Respond and Recover. ODESSA's purpose — blocking injections, denying
+compositional exfiltration, narrowing privilege — is precisely to reduce the
+number of adverse events that ever cross into declared incidents, which is the
+stated value of the Protect Function.
+
+## Function-by-function crosswalk
+
+| CSF 2.0 Function | ODESSA Stage(s) | Alignment notes |
+| --- | --- | --- |
+| **GV — Govern** | Agent Owner accountability; Prohibited Uses; Output Contract | Maps to GV.PO (policy), GV.RR (roles/authorities), GV.SC (supply chain). 800-61r3 §2.2's shared-responsibility-with-contract framing mirrors the 3SRM role split; GV.RM-03 already lists **AI** among the risk types IR decisions must consider. |
+| **ID — Identify** | 1 Observation | Agent identity, manifests, capability declarations, and BOM map to ID.AM asset inventory (incl. detecting **shadow agents**, the agentic analogue of "shadow IT"). Stage 2–3 threat modeling maps to ID.RA. |
+| **PR — Protect** | 4 Source Validation, 5 Safeguard | ODESSA's center of gravity. Maps to PR.AA (least privilege / separation of duties, PR.AA-05), PR.PS (platform / sandbox), PR.DS (data integrity at-rest / in-transit / in-use). |
+| **DE — Detect** | 2 Detection (+ 1 telemetry) | Maps to DE.CM (continuous monitoring) and DE.AE (adverse-event analysis). ODESSA is an **event source**: its receipts and decision records are the structured feed into SIEM/SOAR correlation. |
+| **RS — Respond** | 3 Escalation; 5 Safeguard (BLOCK, kill-switch) | *Partial.* Stage 3 HITL routing maps to RS.MA (triage/prioritize/escalate); BLOCK + circuit-breakers map to RS.MI-01 (containment); owner-chain receipts feed RS.AN-06/07 (integrity & provenance of records and incident data). |
+| **RC — Recover** | — | *Essentially absent.* ODESSA has no restoration, backup-integrity verification (RC.RP-03), or after-action reporting (RC.RP-06). |
+| **ID.IM — Improvement** | 6 Assessment | Strong alignment. Curated training, promotion gates, and drift detection are the continuous-improvement loop where lessons feed into and adjust all Functions at all times. |
+
+## Two caveats built into this mapping
+
+1. **Naming collision — escalation and detection mean different things.**
+   ODESSA "Escalation" is *per-action risk triage routing to a human*;
+   800-61r3 "escalation/elevation" (RS.MA-04) means *increasing resources/time
+   frames or involving higher management for a declared incident*. Likewise
+   ODESSA "Detection" is *real-time signal detection on a single action*, whereas
+   DE.AE culminates in *declaring an incident when adverse events meet defined
+   criteria* (DE.AE-08). ODESSA mostly operates **below** that declaration
+   threshold.
+
+2. **The real scope gaps — what ODESSA does *not* cover.** SP 800-61r3 requires
+   capabilities ODESSA does not provide and should not pretend to:
+   - Incident-declaration criteria (DE.AE-08): when does a run of L3 BLOCKs
+     constitute a *declared incident*?
+   - Respond communications track: notification, public/legal/regulatory
+     reporting (RS.CO).
+   - Eradication of persistence beyond runtime blocking (RS.MI-02).
+   - Root-cause investigation with chain-of-custody (RS.AN-03).
+   - The entire Recover Function (RC.*).
+   - **Tempo mismatch:** 800-61r3 assumes human-paced incidents; agentic cascades
+     move faster. ODESSA's kill-switch / circuit-breakers (Stage 5) are the
+     agent-speed containment that buys time for the slower organizational
+     response 800-61r3 describes.
+
+## Net relationship
+
+ODESSA is the **runtime, agent-speed prevention / detection / containment-
+actuation layer**; SP 800-61r3 is the **organizational IR program** that consumes
+ODESSA's output and handles everything from incident declaration through
+recovery. They interlock cleanly when an implementation:
+
+- treats ODESSA **receipts and provenance** (Stage 1 / Output Contract) as the
+  evidence feed into Detect (DE.AE) and Respond (RS.AN);
+- defines **incident-declaration criteria** that consume ODESSA L3 / repeated-
+  block patterns (closing the DE.AE-08 gap);
+- routes ODESSA `ROUTE_TO_HITL` and kill-switch events into the RS.MA incident-
+  management workflow; and
+- feeds ODESSA **Stage 6 (Assessment)** into the ID.IM improvement loop.
+
+> ODESSA is a control plane, not an incident-response program. SP 800-61r3
+> supplies the Respond and Recover discipline that ODESSA intentionally leaves
+> out of scope.
+
+---
+
 # ⚠️ Global Principles
 
 - **Zero Trust Input**: every prompt — and every tool output, document, memory,
@@ -572,6 +650,14 @@ ODESSA provides a defensive, auditable, and agent-executable method for:
 ✅ enforcing safeguards
 
 ✅ learning from outcomes
+
+— mapped onto the CSA ten-layer Agent Reference Architecture, the AICM control
+ownership model (Agent 3SRM), the OWASP Top 10 for Agentic Applications, and the
+AARM Benchmarking Framework, so that every stage has both a control basis and a
+measurable efficacy target. Its relationship to organizational incident response
+is made explicit through alignment with NIST SP 800-61r3 (CSF 2.0): ODESSA is the
+runtime Protect + Detect control plane that feeds, but does not replace, the
+Respond and Recover discipline of a full incident-response program.
 
 *Disclaimer: "ODESSA" is used solely as an acronym for this framework and is not
 associated with any existing organization or historical reference.*
