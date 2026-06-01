@@ -1,4 +1,4 @@
-# ODESSA — Agentic Input & Action Governance Framework
+# ODESSA — AI Incident Response Loop
 
 **A defensive, auditable, agent-executable control pipeline**
 
@@ -42,6 +42,16 @@ inferring intent.
 - Capture the **original user request** at session initialization and preserve
   it immutably. Downstream intent-alignment checks (Stage 2/3) MUST anchor to
   this captured intent rather than the agent's most recent reasoning state.
+- **The immutable intent MUST be held by the control plane, out-of-band from the
+  agent's context window.** This is a correctness requirement, not an
+  optimization: as long sessions truncate, summarize, or dump memory — and as a
+  goal-hijack actively *overwrites* the agent's working state — any intent anchor
+  stored in the agent's rolling context is exactly what gets lost or rewritten.
+  The control plane MUST re-supply the clean intent to the evaluator on every
+  action, and the orchestration layer (L4) MUST inject it into every sub-agent
+  payload, rather than relying on the agent to carry its own copy forward. If the
+  agent holds the only copy of the intent, a hijack simply rewrites it and drift
+  detection silently re-anchors to the attacker's goal.
 - Record action provenance for every agent action, tool invocation, and
   sub-agent spawn, linking each to the acting agent identity and, ultimately,
   to the Agent Owner.
@@ -170,8 +180,23 @@ something *earned and revocable* rather than a binary allow/block state.
 - Consider **session-level patterns** (not single-turn only); a sequence of
   individually benign actions may collectively warrant escalation.
 - Set `escalationRecommended` when risk ≥ L2.
-- Identify the **step at which semantic distance from the original request
-  crosses a deferral or escalation threshold** for drift scenarios.
+- Identify the **step at which an action crosses a deferral or escalation
+  threshold** for drift scenarios. Use a **scope-primary, distance-secondary**
+  test:
+  - **Authorization-scope check (primary, deterministic):** does the sub-task
+    touch resources, tools, or data classifications outside the *declared task
+    scope* captured in Stage 1? This is the load-bearing signal.
+  - **Semantic distance (secondary, corroborating):** cosine distance between the
+    active sub-task and the cached immutable-intent embedding.
+  Raw semantic distance MUST NOT be used as the sole drift signal: legitimate
+  task decomposition naturally drifts far from the original phrasing (e.g.
+  "query the CRM API" is distant from "prepare for the Johnson meeting" yet
+  benign), so a distance-only threshold either misses slow hijacks or floods
+  the system with false positives. The embedding is computed once at Stage 1 and
+  cached, so per-action evaluation is one embedding plus a similarity comparison;
+  the threshold itself is expected to require empirical calibration (AARM makes
+  R7 a SHOULD and ships a drift-threshold-sensitivity metric for exactly this
+  reason) rather than a fixed constant.
 
 ## Constraints (MUST NOT)
 - MUST NOT downgrade risk without justification.
@@ -492,6 +517,34 @@ miss a multi-step attack that no single action would trigger.
 | **3 Intent-Aligned** | + > 75% on intent drift & goal hijacking; R7 semantic-distance tracking calibrated across ≥ 3 thresholds; step-up routing > 70%; cross-agent propagation detection > 60%. |
 | **4 Production-Grade** | + context-eval overhead < 500ms at 500 actions; deferral resolution > 85%; receipt completeness > 99% under load; FP < 5% across all benign types; over-privileged credential detection > 80% with R9 verified. |
 
+## Meeting the latency budget: the tiered evaluation cascade
+
+Chaining multiple LLM-based evaluations (intent drift, compositional
+exfiltration, injection screening) before every action will not fit a
+500ms-per-action budget at 500-action sessions. The way to reconcile detection
+rate with latency is **not** to replace detection with deterministic checks, but
+to order checks as a cascade so most actions resolve cheaply and the expensive
+judge runs only on the ambiguous residual:
+
+1. **Deterministic pre-filters (cheap, ~always run):** static forbidden-action
+   matching, secret/PII pattern detection, and the Stage 3 authorization-scope
+   check. Resolves the bulk of actions; maps to AARM's *static policy* latency
+   class (< 100ms).
+2. **Vector similarity (cheap):** the cached intent-embedding comparison from
+   Stage 3.
+3. **LLM judge (expensive, selective):** runs only on the actions the first two
+   tiers leave ambiguous — which is also, by construction, the STEP_UP-candidate
+   set. This is where both the latency cost *and* the detection rate live.
+
+> **Caveat — regex is a latency-triage pre-filter, not a security backstop.**
+> Prompt injection is trivially obfuscated past static patterns (encoding,
+> homoglyphs, paraphrase), so deterministic checks cannot carry detection on
+> their own. Leaning on regex *for detection* trades directly against the Tier
+> 2/3 injection targets: you cannot both rely on regex and hit > 80% on
+> injection. Deterministic checks earn their place by cheaply *clearing* benign
+> traffic so the LLM judge's budget is spent only where it matters — they do not
+> substitute for it.
+
 ## Threat scenario coverage
 
 | AARM Scenario | Primary ODESSA Stage(s) | OWASP |
@@ -593,6 +646,32 @@ recovery. They interlock cleanly when an implementation:
 
 ---
 
+# 🏗️ Enforcement Architecture (Deployment)
+
+Stage 5 specifies that guardrails intercept at the **L2 ↔ L5/L6 boundary**. That
+is two distinct boundaries with different right answers, so "API gateway *or*
+sidecar" is a false binary — a production deployment is a **hybrid**, with the
+enforcement point chosen per boundary:
+
+| Boundary | Enforcement point | Why |
+| --- | --- | --- |
+| Tool / inter-agent **egress** (TaaS, MCP, A2A) | **API / MCP gateway** | Centralized, auditable choke point for tool calls and agent-to-agent traffic; natural home for Stage 4 source validation of tool I/O and Stage 5 tool-boundary enforcement. |
+| **Inference / reasoning-step** boundary (prompts and outputs to/from the cognitive core) | **Sidecar / out-of-process proxy in front of the model endpoint** | A network-egress gateway never sees the prompt/output exchange with L2; only a proxy at the inference boundary can screen inputs before the model reads them and outputs before they act. |
+
+The non-negotiable constraint, regardless of topology, is the one the Stage 1
+and Global Principles changes make explicit: **whatever enforces policy must hold
+its own copy of the immutable intent and the active policy, and must sit outside
+the agent's trust boundary.** A sidecar that reads its intent or policy from the
+agent's context — or a gateway an agent can reconfigure — makes "out-of-process"
+cosmetic. Integrity of the enforcement point is a precondition; deceivability of
+any LLM judge it hosts is a separate, residual risk (see *The Evaluator Is an
+Attack Surface*).
+
+> This section describes the architectural options the framework's interception
+> point implies; it is not a prescription of a specific product or vendor.
+
+---
+
 # ⚠️ Global Principles
 
 - **Zero Trust Input**: every prompt — and every tool output, document, memory,
@@ -600,12 +679,26 @@ recovery. They interlock cleanly when an implementation:
 - **Control Before Inference**: enforce policy prior to model execution.
 - **Separation of Planes**: control plane governs; inference plane answers.
   Guardrails run out-of-process so a compromised agent cannot disable them.
+  Out-of-process buys **integrity** (the agent cannot switch the guardrail off);
+  it does **not** by itself buy immunity from the guardrail being deceived — see
+  below.
+- **The Evaluator Is an Attack Surface**: any LLM-based judge in Stages 2/4 is, by
+  definition, reading adversarial content and is susceptible to the same
+  injection, obfuscation, and persona-manipulation it screens for. Running it
+  out-of-process protects its *integrity*, not its *judgment*. Treat the
+  evaluator as in-scope for the threat model: constrain its inputs (strip/escape
+  before it reads), never let it inherit the agent's tools or privileges, prefer
+  classifier-style outputs over free-form reasoning where possible, and assume a
+  non-zero evade rate rather than treating a passed check as proof of safety.
 - **Auditability**: every decision is recorded and explainable.
 - **Fail-Secure**: when uncertain, restrict or deny.
 - **Non-Delegable Accountability**: execution can be delegated; accountability
   cannot. The Agent Owner remains accountable down the full delegation chain.
 - **Permission Narrowing**: each delegation hop narrows scope; no sub-agent
   exceeds its parent.
+- **Anchor Out-of-Band**: the immutable user intent and the active policy live in
+  the control plane, never solely in the agent's context window — or a hijack
+  rewrites the anchor it is being measured against.
 
 ---
 
