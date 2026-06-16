@@ -6,7 +6,8 @@ ODESSA is an AI incident response framework that validates sources, detects adve
 
 ### Like fireflies in the dark, adversarial signals are small, subtle, and easy to miss.
 
-<img width="1254" height="1254" alt="ODESSA_Logo" src="https://github.com/user-attachments/assets/370b7f2e-7619-4fb5-8e9a-a29505fde9a0" />
+<img width="1735" height="906" alt="ODESSA_AI_IR_Loop" src="https://github.com/user-attachments/assets/da996261-6e42-4802-a3e0-eed0d9d002e5" />
+
 
 # 🔁 Incident Response Cycle
 
