@@ -16,7 +16,7 @@ target.
 > **Reading the mapping blocks.** Each stage carries a `📐 Framework Mapping`
 > block. Architecture layers (L1–L10) and the Agentic Control Loop phases come
 > from CSA Part 2. AICM control IDs (e.g. AIS-08, TVM-11) and responsibility
-> ownership come from the Agent 3SRM. OWASP Agentic AI risks (ASI T1-157) and AARM
+> ownership come from the Agent 3SRM. OWASP Agentic AI risks (ASI T1-17) and AARM
 > scenarios indicate which real-world threats the stage addresses and how it is
 > benchmarked. These are *defensive* references only; ODESSA never emits the
 > attacks it defends against (see **Prohibited Uses**).
@@ -701,14 +701,6 @@ ODESSA provides a defensive, auditable, and agent-executable method for:
 ✅ enforcing safeguards
 
 ✅ learning from outcomes
-
-— mapped onto the CSA ten-layer Agent Reference Architecture, the AICM control
-ownership model (Agent 3SRM), the OWASP Top 10 for Agentic Applications, and the
-AARM Benchmarking Framework, so that every stage has both a control basis and a
-measurable efficacy target. Its relationship to organizational incident response
-is made explicit through alignment with NIST SP 800-61r3 (CSF 2.0): ODESSA is the
-runtime Protect + Detect control plane that feeds, but does not replace, the
-Respond and Recover discipline of a full incident-response program.
 
 *Disclaimer: "ODESSA" is used solely as an acronym for this framework and is not
 associated with any existing organization or historical reference.*
