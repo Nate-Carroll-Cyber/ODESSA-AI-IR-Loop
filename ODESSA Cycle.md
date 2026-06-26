@@ -2,9 +2,7 @@
 
 ODESSA is a six-stage pipeline for validating sources, detecting adversarial
 signals, escalating risk, enforcing safeguards, and learning from outcomes —
-*before, during, and after* any model interaction or agent action. It is a
-**control-plane** discipline: it governs what an agent is allowed to perceive
-and do, while the inference plane answers.
+*before, during, and after* any model interaction or agent action.
 
 This document extends the base ODESSA stages with (a) additional depth in each
 stage, (b) mappings to the CSA AI Agent series — the ten-layer Agent Reference
