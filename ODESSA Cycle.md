@@ -1,7 +1,5 @@
 # ODESSA — AI Incident Response Loop
 
-**A defensive, auditable, agent-executable control pipeline**
-
 ODESSA is a six-stage pipeline for validating sources, detecting adversarial
 signals, escalating risk, enforcing safeguards, and learning from outcomes —
 *before, during, and after* any model interaction or agent action. It is a
@@ -18,7 +16,7 @@ target.
 > **Reading the mapping blocks.** Each stage carries a `📐 Framework Mapping`
 > block. Architecture layers (L1–L10) and the Agentic Control Loop phases come
 > from CSA Part 2. AICM control IDs (e.g. AIS-08, TVM-11) and responsibility
-> ownership come from the Agent 3SRM. OWASP risks (ASI01–ASI10) and AARM
+> ownership come from the Agent 3SRM. OWASP Agentic AI risks (ASI T1-157) and AARM
 > scenarios indicate which real-world threats the stage addresses and how it is
 > benchmarked. These are *defensive* references only; ODESSA never emits the
 > attacks it defends against (see **Prohibited Uses**).
@@ -81,14 +79,13 @@ inferring intent.
   & Autonomy (agent identity, manifests, delegation provenance); L3 Data, Memory
   & Knowledge (session/context persistence); L4 Orchestration (delegation-chain
   tracking).
-- **Control-loop phase:** PERCEIVE → REMEMBER.
 - **AICM controls:** LOG-01–15 (esp. LOG-14 Input Monitoring); IAM-01–19 (agent
   identity); STA-16 (Service BOM / capability inventory); A&A-01–06 (audit
   substrate). Provenance for sub-agents extends LOG-14/15 + STA-16 to delegation
   chains.
-- **OWASP relevance:** Foundational telemetry for ASI10 (Rogue Agents) and ASI06
-  (Memory/Context Poisoning) detection; supports ASI08 (Cascading Failures)
-  forensics. Implements capability C14 (Auditability & Transparency).
+- **OWASP relevance:** Foundational telemetry for ASI T13 (Rogue Agents) and ASI T1
+  (Memory/Context Poisoning) detection; supports ASI T5 (Cascading Failures)
+  forensics.
 - **3SRM ownership:** Agent Owner (AIC) is the integrating party / central
   correlator; each provider (CSP, MP, OSP, AP, Tool Provider) emits telemetry
   for its own delivery layer.
@@ -101,7 +98,7 @@ inferring intent.
 # 🔍 Stage 2 — Detection
 
 ## Goal
-Identify signals indicating adversarial behavior across the full session, using
+Identify precursors and indicators indicating adversarial behavior across the full session, using
 behavioral baselines and prompt-chain observability rather than single-turn
 heuristics alone.
 
@@ -128,7 +125,7 @@ heuristics alone.
   (Stage 3).
 
 ## Detection Modeling
-* **Expanded STRIDE Modeling:** Evaluate systems for standard threats while
+* **Expanded Threat Modeling (MAESTRO, STRIDE & DREAD):** Evaluate systems for standard threats while
   introducing "Lack of Accountability" and "Misunderstanding" categories to
   handle the unique behavioral challenges of AI agents.
 * **Intent and Tool Manipulation:** Actively monitor for prompt injections,
@@ -146,14 +143,12 @@ heuristics alone.
 - **Architecture layers:** L8 Safety & Security (primary — input filtering,
   threat detection); L9 Monitoring & Observability (baseline comparison, anomaly
   detection); L2 Cognitive Core (instruction-hierarchy enforcement).
-- **Control-loop phase:** THINK (pre-ACT evaluation).
 - **AICM controls:** AIS-08 (Input Validation); AIS-15 (Prompt Differentiation —
   distinguishing user input from data and system instructions); TVM-12 (Threat
   Analysis & Modelling); TVM-11 (Guardrails); MDS-06–07 (Adversarial Attack
   analysis / hardening); LOG-14/15 (I/O Monitoring).
-- **OWASP relevance:** ASI01 (Agent Goal Hijacking); ASI06 (Memory & Context
-  Poisoning); ASI02 (Tool Misuse). MAESTRO threat scaling applies here: map
-  detected tactics against the architecture to gauge severity.
+- **OWASP relevance:** ASI T6 (Agent Goal Hijacking); ASI T1 (Memory & Context
+  Poisoning); ASI T2 (Tool Misuse). 
 - **3SRM ownership:** Shared — MP (model-level detection / instruction
   hierarchy), OSP (orchestration-level chain tracing), AP (application
   guardrails); Agent Owner integrates the signals.
@@ -218,11 +213,10 @@ something *earned and revocable* rather than a binary allow/block state.
 - **Architecture layers:** L7 Identity & Autonomy (autonomy-boundary
   calibration); L10 Governance (escalation rules, human-escalation interface);
   L8 Safety & Security.
-- **Control-loop phase:** AUTHENTICATE AND AUTHORIZE.
 - **AICM controls:** GRC-15 (Human Supervision); IAM-18 (Output Modification &
   Special Authorization); TVM-12 (Threat Modelling). Tiered autonomy extends
   IAM-01–19 to runtime, risk-calibrated permission scoping.
-- **OWASP relevance:** ASI03 (Identity & Privilege Abuse); ASI09 (Human-Agent
+- **OWASP relevance:** ASI T3 & T9 (Identity & Privilege Abuse); ASI T10 & T14 (Human-Agent
   Trust Exploitation — calibrating *what* gets routed to a human to avoid
   approval fatigue).
 - **3SRM ownership:** Agent Owner (AIC) sets autonomy tiers and delegation-depth
@@ -243,7 +237,7 @@ Determine whether input is trustworthy, ambiguous, or potentially adversarial
 - Treat all input as **untrusted** by default — including tool outputs,
   retrieved documents, inter-agent messages, and memory contents.
 - Normalize and sanitize input.
-- Remove or mask sensitive patterns (PII, secrets, credentials).
+- Remove or mask sensitive patterns (PII, secrets, configurations).
 - Flag non-essential concealment patterns (encoding, unusual structure).
 - Validate the safety and necessity of each **dynamically generated subtask**
   before it accesses external data or tools.
@@ -269,13 +263,12 @@ Determine whether input is trustworthy, ambiguous, or potentially adversarial
   sanitization); L3 Data, Memory & Knowledge (memory/context integrity); L6
   Tools, Application, Environment & Ecosystem (tool/source provenance); L7
   Identity & Autonomy (Zero Trust verification).
-- **Control-loop phase:** PERCEIVE → (gate before) THINK.
 - **AICM controls:** AIS-08 (Input Validation); AIS-15 (Prompt Differentiation);
   AIS-14 (Cache Protection); DSP-21 (Data Poisoning Prevention & Detection);
   DSP-23 (Data Integrity Check); DSP-24 (Data Differentiation & Relevance);
   STA-01–16 (supply-chain validation for tools/MCP servers).
-- **OWASP relevance:** ASI01 (injection); ASI06 (Memory/Context Poisoning);
-  ASI04 (Supply Chain Vulnerabilities); ASI07 (Insecure Inter-Agent Comms).
+- **OWASP relevance:** ASI T11 (injection); ASI T1 (Memory/Context Poisoning);
+  ASI T17 (Supply Chain Vulnerabilities); ASI T16 (Insecure Inter-Agent Comms).
 - **3SRM ownership:** Shared across the chain — Tool Provider (tool API I/O
   validation, capability documentation), MP (model-tool interaction integrity),
   Agent Owner (tool-selection and supply-chain due diligence; STA-16 BOM).
@@ -293,10 +286,10 @@ Enforce policy before and during any model interaction or agent action, from an
 out-of-process control point that a compromised agent cannot override.
 
 ## Actions
-- **BLOCK:** prevent inference / action entirely.
+- **BLOCK / DENY:** prevent inference / action entirely.
 - **CONSTRAIN:** allow a limited, high-level response only (least disclosure).
-- **ROUTE_TO_HITL:** queue for human review / step-up authorization.
-- **FORWARD:** send sanitized prompt to inference / permit the action.
+- **ROUTE_TO_HITL / STEP_UP / DEFER:** queue for human review / step-up authorization.
+- **FORWARD / MODIFY:** send sanitized prompt to inference / permit the action.
 
 ## Requirements (MUST)
 - Prefer **pre-inference blocking** for high-risk inputs.
@@ -337,14 +330,12 @@ out-of-process control point that a compromised agent cannot override.
   Identity & Autonomy (least-privilege enforcement); L6 Tools & Ecosystem (tool
   boundaries); L5 Deployment & Execution (sandboxed execution); L10 Governance
   (policy engine, kill switch, HITL interface).
-- **Control-loop phase:** AUTHENTICATE AND AUTHORIZE → ACT (guardrails on the
-  action).
 - **AICM controls:** TVM-11 (Guardrails); AIS-11 (Agent Security Boundaries);
   AIS-13 (AI Sandboxing); AIS-09 (Output Validation); IAM-18 (Output
   Modification & Special Authorization); IAM-01–19 (least privilege); GRC-15
   (Human Supervision).
-- **OWASP relevance:** ASI02 (Tool Misuse — permission scoping); ASI05
-  (Unexpected Code Execution — sandboxing); ASI03 (Privilege Abuse); ASI10
+- **OWASP relevance:** ASI T2 (Tool Misuse — permission scoping); ASI T11
+  (Unexpected Code Execution — sandboxing); ASI T3 (Privilege Abuse); ASI T13
   (Rogue Agents — kill switch / human override).
 - **3SRM ownership:** Shared — AP (application guardrails), OSP (orchestration
   boundaries, AIS-11 at the Orchestrated Services layer), CSP/AP (AIS-13
@@ -404,13 +395,12 @@ training signal.
 - **Architecture layers:** L9 Evaluation, Monitoring & Observability; L10
   Governance, Authority, Accountability, Risk & Compliance; L2 Cognitive Core
   (reflection / learning).
-- **Control-loop phase:** REFLECT (and feedback into the next LOOP).
 - **AICM controls:** A&A-01–06 (Audit & Assurance); GRC-13–14 (Explainability);
   GRC-10 (AI Impact Assessment); MDS-10 (Continuous Model Monitoring); SEF-01–09
   (Security Incident Mgmt / forensics). Proposed agentic extensions: LOG-16 /
   MDS-14 (behavioral-drift detection).
-- **OWASP relevance:** ASI08 (Cascading Failures — cascade detection); ASI10
-  (Rogue Agents — behavioral anomaly detection); ASI09 (Human-Agent Trust).
+- **OWASP relevance:** ASI T5 (Cascading Failures — cascade detection); ASI T13
+  (Rogue Agents — behavioral anomaly detection); ASI T15 (Human-Agent Trust).
 - **3SRM ownership:** Agent Owner (AIC) holds primary integrating governance
   responsibility (non-delegable); providers supply attestations (CSA STAR, SOC
   2, ISO 27001, ISO 42001) and respond to AI-CAIQ assessments.
@@ -429,14 +419,14 @@ different angles. The crosswalks below align them.
 
 ## ODESSA → Agentic Control Loop → Operational Cycle
 
-| ODESSA Stage | Control-Loop Phase(s) | Identify-Classify-Control-Monitor-Assure |
-| --- | --- | --- |
-| 1. Observation | PERCEIVE, REMEMBER | Identify |
-| 2. Detection | THINK | Classify (+ Monitor) |
-| 3. Escalation | AUTHENTICATE & AUTHORIZE | Classify → Control |
-| 4. Source Validation | PERCEIVE → (gate) THINK | Control (pre-action) |
-| 5. Safeguard | AUTHORIZE → ACT | Control |
-| 6. Assessment | REFLECT | Monitor + Assure |
+| ODESSA Stage | Identify-Classify-Control-Monitor-Assure |
+| --- | --- |
+| 1. Observation | Identify |
+| 2. Detection | Classify (+ Monitor) |
+| 3. Escalation | Classify → Control |
+| 4. Source Validation | Control (pre-action) |
+| 5. Safeguard | Control |
+| 6. Assessment | Monitor + Assure |
 
 ## ODESSA → Primary Architecture Layers
 
@@ -545,23 +535,6 @@ judge runs only on the ambiguous residual:
 > traffic so the LLM judge's budget is spent only where it matters — they do not
 > substitute for it.
 
-## Threat scenario coverage
-
-| AARM Scenario | Primary ODESSA Stage(s) | OWASP |
-| --- | --- | --- |
-| Prompt Injection (direct/indirect) | 2 Detection, 4 Source Validation | ASI01 |
-| Compositional Data Exfiltration | 2 Detection, 5 Safeguard | ASI06/ASI02 |
-| Intent Drift | 2 Detection, 3 Escalation | ASI01/ASI10 |
-| Goal Hijacking | 2 Detection, 5 Safeguard | ASI01 |
-| Confused Deputy | 2 Detection, 5 Safeguard | ASI02 |
-| Over-Privileged Credential Exploitation | 5 Safeguard | ASI03 |
-| Memory Poisoning* | 1 Observation, 4 Source Validation | ASI06 |
-| Cross-Agent Propagation* | 1 Observation, 4 Source Validation | ASI07/ASI08 |
-
-\* AARM marks memory poisoning and cross-agent propagation as partially in scope
-for session-level controls; ODESSA detects the *resulting action* and should
-report these with that caveat.
-
 ---
 
 # 🏛️ Alignment with NIST SP 800-61r3 (CSF 2.0 Incident Response Profile)
@@ -624,25 +597,6 @@ stated value of the Protect Function.
      move faster. ODESSA's kill-switch / circuit-breakers (Stage 5) are the
      agent-speed containment that buys time for the slower organizational
      response 800-61r3 describes.
-
-## Net relationship
-
-ODESSA is the **runtime, agent-speed prevention / detection / containment-
-actuation layer**; SP 800-61r3 is the **organizational IR program** that consumes
-ODESSA's output and handles everything from incident declaration through
-recovery. They interlock cleanly when an implementation:
-
-- treats ODESSA **receipts and provenance** (Stage 1 / Output Contract) as the
-  evidence feed into Detect (DE.AE) and Respond (RS.AN);
-- defines **incident-declaration criteria** that consume ODESSA L3 / repeated-
-  block patterns (closing the DE.AE-08 gap);
-- routes ODESSA `ROUTE_TO_HITL` and kill-switch events into the RS.MA incident-
-  management workflow; and
-- feeds ODESSA **Stage 6 (Assessment)** into the ID.IM improvement loop.
-
-> ODESSA is a control plane, not an incident-response program. SP 800-61r3
-> supplies the Respond and Recover discipline that ODESSA intentionally leaves
-> out of scope.
 
 ---
 
