@@ -299,6 +299,11 @@ Determine whether input is trustworthy, ambiguous, or potentially adversarial
   before it accesses external data or tools.
 - Verify the provenance of dynamically discovered tools / MCP servers before
   binding to them at runtime.
+## Requirements (SHOULD)
+- Annotate outputs surfaced to human reviewers with **claim-level reliability
+  markers** — *reliable / uncertain / unsupported* — derived from this stage's
+  provenance and validation work, so the human Source check (below) is
+  supported by the pipeline rather than performed cold.
 ## Constraints (MUST NOT)
 - MUST NOT pass raw sensitive data to downstream models.
 - MUST NOT assume benign intent.
@@ -311,6 +316,35 @@ Determine whether input is trustworthy, ambiguous, or potentially adversarial
 * **Goal and Subtask Validation:** Since agentic systems receive high-level
   goals and break them into subtasks, validate the safety and necessity of each
   dynamically generated subtask before it accesses external data.
+## 🗒️ Human Reporting Protocol (The Debrief)
+Zero Trust applies to the model's own output as a source. Automated validation
+screens what enters the model; this protocol screens what leaves it before a
+human relies on it. Whenever an AI output informs a human decision — at a
+STEP_UP / ROUTE_TO_HITL checkpoint or in routine use — the consuming human runs
+the same validation posture this stage applies to inputs, structured as a
+post-meeting debrief:
+- **Requirement** — what question are we actually trying to answer? Anchor to
+  the Stage 1 immutable intent, re-supplied by the control plane — never to the
+  agent's restatement of it. The reviewer gets the same hijack-resistant anchor
+  the evaluator uses.
+- **Prompt** — what, precisely, did we ask? Saved; the Stage 1 receipt is the
+  record of what was actually sent, not what anyone remembers sending.
+- **Output** — what did the AI say?
+- **Source check** — what in this output is reliable? What is uncertain? What
+  is unsupported? Informed by the claim-level reliability markers above and the
+  Stage 2 detection summary.
+- **Human judgment** — what do we actually believe, independent of the AI?
+- **Action** — what will we do?
+- **Review** — what happened after we acted? Did the AI's analysis hold up?
+  Recorded as a receipt feeding Stage 6, where outcomes inform the
+  deferral-resolution metric and the promotion gates.
+The machine half of the debrief (Requirement, Prompt, Output, the annotated
+Source check) MUST be delivered in the STEP_UP payload; the human half
+(judgment, action, review) produces its own receipt. This is also the
+qualitative counterpart to the Stage 3 escalation budget: the budget bounds how
+*often* a human is asked, this protocol determines whether the asking is worth
+anything — a reviewer handed these artifacts can judge quickly and well, while
+a reviewer handed nothing rubber-stamps.
 ## 📐 Framework Mapping
 - **Architecture layers:** L8 Safety & Security (input validation,
   sanitization); L3 Data, Memory & Knowledge (memory/context integrity); L6
@@ -378,7 +412,8 @@ out-of-process control point that a compromised agent cannot override.
   workflow.
 * **Human-in-the-Loop (HITL) Checkpoints:** Prevent agents from executing
   sensitive transactions, communications, or system updates without a mandatory
-  human review step.
+  human review step. Reviewers follow the Stage 4 *Human Reporting Protocol*;
+  the STEP_UP payload carries its machine-supplied artifacts.
 * **Application Guardrails:** Implement robust system-prompt hardening and apply
   content-safety guardrails to monitor runtime inputs and outputs across the
   application. Guardrails should run **out-of-process** from the agent runtime,
