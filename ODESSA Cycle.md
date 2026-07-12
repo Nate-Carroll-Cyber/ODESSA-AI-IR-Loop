@@ -798,3 +798,6 @@ ODESSA provides a defensive, auditable, and agent-executable method for:
 ✅ executing the organizational incident response (Downstream Workflow)
 *Disclaimer: "ODESSA" is used solely as an acronym for this framework and is not
 associated with any existing organization or historical reference.*
+
+Additional Sources:
+* O'Neil, J., Mears, M., & Lawler, J. C. (2026, July 8). If you can run a spy, you can run AI. *The Cipher Brief*. [https://www.thecipherbrief.com/if-you-can-run-a-spy-you-can-run-ai](https://www.thecipherbrief.com/if-you-can-run-a-spy-you-can-run-ai)
