@@ -1,7 +1,12 @@
 # ODESSA — AI Incident Response Loop
-ODESSA is a six-stage pipeline for validating sources, detecting adversarial
-signals, escalating risk, enforcing safeguards, and learning from outcomes —
-*before, during, and after* any model interaction or agent action.
+ODESSA is a six-stage runtime pipeline for validating sources, detecting
+adversarial signals, escalating risk, enforcing safeguards, and learning from
+outcomes — *before, during, and after* any model interaction or agent action.
+The runtime loop is bookended by a pre-runtime governance stage (**Stage 0 —
+Governance & Readiness**) and a post-incident organizational workflow (**the
+Out-of-Band Downstream Workflow**), which together bridge the runtime safeguard
+to a compliant organizational standard (ISO 27001/27002, ISO/IEC 42001, NIST SP
+800-61r3).
 This document extends the base ODESSA stages with (a) additional depth in each
 stage, (b) mappings to the CSA AI Agent series — the ten-layer Agent Reference
 Architecture (Part 2), the AI Controls Matrix (AICM) ownership model (Part 3 /
@@ -23,7 +28,46 @@ measurable efficacy target.
 > not strict runtime sequence. At runtime, Source Validation (Stage 4) executes
 > on raw input *before* Detection (Stage 2) analyzes it; Escalation (Stage 3)
 > and Safeguard (Stage 5) then act on the combined result. The loop runs per
-> action, continuously across the session.
+> action, continuously across the session. Stage 0 runs once, before
+> deployment; the Downstream Workflow runs only when a declared incident
+> crosses the Stage 0 threshold.
+---
+# 📋 Stage 0 — Governance & Readiness (Pre-Runtime)
+## Goal
+Establish the organizational baseline, define incident declaration thresholds,
+and provision the governance artifacts the runtime stages (1–6) depend on —
+before any agent is deployed.
+## Requirements (MUST)
+- Define and document an information security incident management plan to
+  ensure readiness across the organization.
+- Provision the foundational pre-runtime artifacts the runtime stages enforce:
+  size the **STEP_UP rate budget** (Stage 3), define **autonomy-tier criteria**
+  (Stage 3), assign **kill-switch authorization roles** (Stage 5 / *Protecting
+  the Protector*), and establish the **authenticated change-management path**
+  for the policy store.
+- Establish clear internal reporting pathways for personnel to flag observed
+  information security events or system weaknesses.
+- Provide external reporting capabilities allowing outside interested parties
+  (customers, researchers, the public) to submit reports of adverse AI impacts.
+  Route these reports to Stage 6 Assessment, where they seed Stage 2 detection
+  signals and refine the declaration criteria.
+- Define the exact **incident declaration criteria** — the specific thresholds
+  (e.g. a sustained velocity of Stage 5 BLOCK actions, or targeted semantic
+  drift) that elevate a managed runtime event into a declared organizational
+  incident. Stage 6 evaluates these continuously; the *Out-of-Band Downstream
+  Workflow* executes when they are crossed.
+## Constraints (MUST NOT)
+- MUST NOT deploy autonomous agents into production without a tested intake
+  channel for external adverse-impact reports.
+- MUST NOT rely solely on automated telemetry (Stage 1) while ignoring
+  human-driven event reporting.
+## 📐 Framework Mapping
+- **ISO 27002:2022 / ISO 27001:** 5.24 (Information security incident
+  management planning and preparation); 6.8 (Information security event
+  reporting).
+- **ISO/IEC 42001:2023:** A.8.3 (External reporting).
+- **NIST SP 800-61r3:** Govern (GV) and the preparation phases of incident
+  response.
 ---
 # 👁️ Stage 1 — Observation
 ## Goal
@@ -183,8 +227,9 @@ something *earned and revocable* rather than a binary allow/block state.
 - Consider **session-level patterns** (not single-turn only); a sequence of
   individually benign actions may collectively warrant escalation.
 - Set `escalationRecommended` when risk ≥ L2.
-- Define a **STEP_UP rate budget** (e.g. ≤ N escalations per session or per
-  hour per principal), sized to actual reviewer capacity. When the budget is
+- Enforce the **STEP_UP rate budget provisioned in Stage 0** (e.g. ≤ N
+  escalations per session or per hour per principal, sized to actual reviewer
+  capacity). When the budget is
   exceeded, the system MUST fail-secure (DENY or pause the session) rather than
   silently downgrade to ALLOW: an over-budget escalation stream indicates
   either an attack or miscalibration, and both warrant stopping, not
@@ -304,7 +349,9 @@ out-of-process control point that a compromised agent cannot override.
 - Support a **fail-secure** posture (deny by default when uncertain).
 - Support **global pause / kill-switch** states and per-cluster circuit breakers
   to halt cascading multi-agent loops. (Invocation controls for the kill switch
-  itself are specified in *Protecting the Protector*, below.)
+  itself are specified in *Protecting the Protector*; a declared incident can
+  invoke scoped kill switches, and any manual global activation is itself a
+  declarable event — see the *Out-of-Band Downstream Workflow*.)
 - Enforce **least privilege at issuance**: an agent (or sub-agent) must hold only
   the permissions its task requires; credentials scoped wider than the task are a
   finding even before they are abused.
@@ -370,11 +417,18 @@ training signal.
   - action taken
   - outcome
 - Support analyst review and severity reassignment.
-- Feed approved records into **curated training sets** (e.g., preference pairs).
+- Feed approved records into **curated training sets** (e.g., preference
+  pairs). Records generated during a declared-incident window are quarantined
+  until cleared (see *Downstream Workflow — Eradication*).
 - Retain the **explainable rationale** behind each autonomous decision so it can
   be retrieved for post-incident review.
 - Detect and attribute **cascading failures** across the delegation chain to the
   responsible agent(s) and, ultimately, the Agent Owner.
+- Continuously evaluate the receipt stream against the **incident declaration
+  criteria** defined in Stage 0; crossing the threshold MUST automatically
+  trigger the *Out-of-Band Downstream Workflow*. Declaration is a monitored,
+  automated determination — it never depends on a human noticing a run of
+  BLOCKs.
 ## Metrics (SHOULD)
 - pre-inference block rate
 - safeguard (model) intervention rate
@@ -415,6 +469,53 @@ training signal.
   Production-Grade) measures how well Stages 1–5 perform under realistic
   sessions.
 ---
+# 🚨 Out-of-Band Downstream Workflow (Respond, Eradicate, Recover)
+## Goal
+Execute the organizational response, eradication, and stakeholder communication
+once a runtime event breaches the defined incident threshold. This workflow
+operates **at human speed, outside the automated ODESSA loop**, driven by
+continuous threshold evaluation.
+## Triggers & Automation
+- The control plane (Stage 6) MUST continuously evaluate the receipt stream
+  against Stage 0's declaration criteria. Crossing the threshold MUST trigger
+  this workflow automatically — declaration never depends on a human noticing
+  a run of BLOCKs.
+- **Kill-switch linkage:** a declared incident can automatically invoke scoped
+  kill switches (Stage 5). Conversely, any manual global kill-switch activation
+  is itself a declarable event that immediately triggers this workflow.
+## Requirements (MUST)
+- **Evidence collection:** transition from automated log retention to formal
+  evidence collection. Original logs MUST be frozen and hash-verified (anchored
+  to the tamper-evident requirements in *Protecting the Protector*); all
+  subsequent parsing and analysis happens strictly on verified copies.
+- **Communication:** execute the documented plan for communicating incidents to
+  impacted users and relevant stakeholders, ensuring transparency regarding AI
+  failures or breaches.
+- **Eradication (agent-specific):** purge poisoned memory/knowledge stores and
+  revoke any credentials issued to the agent during the incident window.
+  Explicitly **quarantine Stage 6 curated-training records generated during the
+  incident window until cleared** — otherwise the learning loop trains on
+  attacker-shaped data and the incident persists in the model.
+- **Magnitude validation:** coordinate environment-wide investigation across
+  non-agent targets to ensure an agentic breach has not cascaded into standard
+  enterprise systems.
+- **After-action reporting:** conduct formal after-action reviews identifying
+  root causes; feed lessons back to Stage 0 (policy and criteria updates) and
+  Stage 6 (learning), closing the continuous-improvement loop.
+## Constraints (MUST NOT)
+- MUST NOT alter or clean original runtime audit logs once they are flagged for
+  formal forensic evidence collection.
+- MUST NOT use the agent's internal `reason` output (from the Output Contract)
+  as the sole public-facing incident communication.
+## 📐 Framework Mapping
+- **ISO 27002:2022 / ISO 27001:** 5.28 (Collection of evidence).
+- **ISO/IEC 42001:2023:** A.8.4 (Communication of incidents).
+- **NIST SP 800-61r3:** RS.CO (communications); RS.AN-06/07 (formal forensic
+  investigation with chain-of-custody); RS.AN-08 (environment-wide magnitude
+  validation); RS.MI-02 (eradication); RC.RP-06 (after-action reporting,
+  feeding ID.IM). Infrastructure restoration and backup-integrity verification
+  (RC.RP-03) remain out of scope and defer to standard IT disaster recovery.
+---
 # 🔗 Framework Crosswalk
 ODESSA is a control-plane pipeline; the CSA Part 2 architecture, the operational
 cycle, and the AARM decision model all describe the same governance surface from
@@ -422,21 +523,25 @@ different angles. The crosswalks below align them.
 ## ODESSA → Agentic Control Loop → Operational Cycle
 | ODESSA Stage | Identify-Classify-Control-Monitor-Assure |
 | --- | --- |
+| 0. Governance & Readiness | Identify (pre-runtime — plan, criteria, channels) |
 | 1. Observation | Identify |
 | 2. Detection | Classify (+ Monitor) |
 | 3. Escalation | Classify → Control |
 | 4. Source Validation | Control (pre-action) |
 | 5. Safeguard | Control |
 | 6. Assessment | Monitor + Assure |
+| Downstream Workflow | Assure (post-incident, out-of-band) |
 ## ODESSA → Primary Architecture Layers
 | ODESSA Stage | Primary Layer(s) | Supporting Layer(s) |
 | --- | --- | --- |
+| 0. Governance & Readiness | L10 Governance | L7 Identity (role assignment) |
 | 1. Observation | L9 Monitoring | L7 Identity, L3 Memory, L4 Orchestration |
 | 2. Detection | L8 Safety & Security | L9 Monitoring, L2 Cognitive Core |
 | 3. Escalation | L7 Identity & Autonomy | L10 Governance, L8 Safety |
 | 4. Source Validation | L8 Safety & Security | L3 Memory, L6 Tools, L7 Identity |
 | 5. Safeguard | L8 Safety & Security | L7 Identity, L6 Tools, L5 Execution, L10 Governance |
 | 6. Assessment | L9 Monitoring, L10 Governance | L2 Cognitive Core |
+| Downstream Workflow | L10 Governance | L9 Monitoring (evidence source) |
 > Layers L7–L10 (CSA Domain 3) are **horizontal / cross-cutting** — they span
 > every operational layer. ODESSA inherits that property: Identity (L7), Safety
 > (L8), Monitoring (L9), and Governance (L10) concerns recur across most stages
@@ -453,7 +558,7 @@ ODESSA capability deepens with organizational maturity:
 | Maturity Level | ODESSA Capability Present |
 | --- | --- |
 | L0 Unaware | None — no Observation substrate |
-| L1 Inventory | Stage 1 identity/manifest logging |
+| L1 Inventory | Stage 0 incident-management plan & reporting channels; Stage 1 identity/manifest logging |
 | L2 Basic Controls | Stages 4–5 input/output guardrails, tool allowlisting |
 | L3 Type-Specific Governance | Stage 3 tiered autonomy, risk-calibrated escalation |
 | L4 Runtime Monitoring | Stage 2 behavioral baselines + drift detection |
@@ -543,17 +648,21 @@ program** that takes over once an adverse event becomes a declared incident and
 runs through Respond and Recover. ODESSA's purpose — blocking injections, denying
 compositional exfiltration, narrowing privilege — is precisely to reduce the
 number of adverse events that ever cross into declared incidents, which is the
-stated value of the Protect Function.
+stated value of the Protect Function. **Stage 0 and the Out-of-Band Downstream
+Workflow extend coverage across that line**: Stage 0 supplies the
+Govern/preparation baseline, and the Downstream Workflow executes the
+declared-incident response — while the runtime loop itself remains upstream of
+declaration.
 ## Function-by-function crosswalk
 | CSF 2.0 Function | ODESSA Stage(s) | Alignment notes |
 | --- | --- | --- |
-| **GV — Govern** | Agent Owner accountability; Prohibited Uses; Output Contract | Maps to GV.PO (policy), GV.RR (roles/authorities), GV.SC (supply chain). 800-61r3 §2.2's shared-responsibility-with-contract framing mirrors the 3SRM role split; GV.RM-03 already lists **AI** among the risk types IR decisions must consider. |
+| **GV — Govern** | 0 Governance & Readiness; Agent Owner accountability; Prohibited Uses; Output Contract | Stage 0's incident-management plan, reporting channels, and declaration criteria map to GV and preparation (ISO 27002 5.24/6.8; ISO 42001 A.8.3). Maps to GV.PO (policy), GV.RR (roles/authorities), GV.SC (supply chain). 800-61r3 §2.2's shared-responsibility-with-contract framing mirrors the 3SRM role split; GV.RM-03 already lists **AI** among the risk types IR decisions must consider. |
 | **ID — Identify** | 1 Observation | Agent identity, manifests, capability declarations, and BOM map to ID.AM asset inventory (incl. detecting **shadow agents**, the agentic analogue of "shadow IT"). Stage 2–3 threat modeling maps to ID.RA. |
 | **PR — Protect** | 4 Source Validation, 5 Safeguard | ODESSA's center of gravity. Maps to PR.AA (least privilege / separation of duties, PR.AA-05), PR.PS (platform / sandbox), PR.DS (data integrity at-rest / in-transit / in-use). |
-| **DE — Detect** | 2 Detection (+ 1 telemetry) | Maps to DE.CM (continuous monitoring) and DE.AE (adverse-event analysis). ODESSA is an **event source**: its receipts and decision records are the structured feed into SIEM/SOAR correlation. |
-| **RS — Respond** | 3 Escalation; 5 Safeguard (BLOCK, kill-switch); 6 Assessment | *Partial.* Stage 3 HITL routing maps to RS.MA (triage/prioritize/escalate); BLOCK + circuit-breakers map to RS.MI-01 (containment); owner-chain receipts feed RS.AN-06/07 (integrity & provenance of records and incident data). **Stage 6 covers the agent-behavioral portion of RS.AN-03 (root-cause analysis)** via explainability audits and delegation-chain cascade attribution; the environment-wide investigation, threat-actor attribution, and forensic chain-of-custody remain out of scope. |
-| **RC — Recover** | — | *Essentially absent.* ODESSA has no restoration, backup-integrity verification (RC.RP-03), or after-action reporting (RC.RP-06). |
-| **ID.IM — Improvement** | 6 Assessment | Strong alignment. Curated training, promotion gates, and drift detection are the continuous-improvement loop where lessons feed into and adjust all Functions at all times. RS.AN-03's recurrence-prevention note (identifying weaknesses so similar incidents are avoided) also lands here — Stage 6 straddles Respond-analysis and Improvement. |
+| **DE — Detect** | 2 Detection (+ 1 telemetry) | Maps to DE.CM (continuous monitoring) and DE.AE (adverse-event analysis). ODESSA is an **event source**: its receipts and decision records are the structured feed into SIEM/SOAR correlation. Stage 0 defines — and Stage 6 continuously evaluates — the DE.AE-08 declaration criteria. |
+| **RS — Respond** | 3 Escalation; 5 Safeguard (BLOCK, kill-switch); 6 Assessment; Downstream Workflow | Stage 3 HITL routing maps to RS.MA (triage/prioritize/escalate); BLOCK + circuit-breakers map to RS.MI-01 (containment); owner-chain receipts feed RS.AN-06/07 (integrity & provenance of records and incident data). **Stage 6 covers the agent-behavioral portion of RS.AN-03 (root-cause analysis)** via explainability audits and delegation-chain cascade attribution. The Downstream Workflow adds RS.CO (communications), formal forensic collection with chain-of-custody (RS.AN-06/07), environment-wide magnitude validation (RS.AN-08), and eradication (RS.MI-02). Prosecution-grade threat-actor attribution remains an organizational/legal function. |
+| **RC — Recover** | Downstream Workflow (partial) | *Partial.* After-action reporting (RC.RP-06) is covered by the Downstream Workflow and feeds ID.IM. System restoration and backup-integrity verification (RC.RP-03) remain out of scope by design, deferring to standard IT disaster recovery. |
+| **ID.IM — Improvement** | 6 Assessment; Downstream Workflow (after-action) | Strong alignment. Curated training, promotion gates, and drift detection are the continuous-improvement loop where lessons feed into and adjust all Functions at all times. RS.AN-03's recurrence-prevention note (identifying weaknesses so similar incidents are avoided) also lands here — Stage 6 straddles Respond-analysis and Improvement. |
 ## Two caveats built into this mapping
 1. **Naming collision — escalation and detection mean different things.**
    ODESSA "Escalation" is *per-action risk triage routing to a human*;
@@ -561,25 +670,21 @@ stated value of the Protect Function.
    frames or involving higher management for a declared incident*. Likewise
    ODESSA "Detection" is *real-time signal detection on a single action*, whereas
    DE.AE culminates in *declaring an incident when adverse events meet defined
-   criteria* (DE.AE-08). ODESSA mostly operates **below** that declaration
-   threshold.
-2. **The real scope gaps — what ODESSA does *not* cover.** SP 800-61r3 requires
-   capabilities ODESSA does not provide and should not pretend to:
-   - Incident-declaration criteria (DE.AE-08): when does a run of L3 BLOCKs
-     constitute a *declared incident*?
-   - Respond communications track: notification, public/legal/regulatory
-     reporting (RS.CO).
-   - Eradication of persistence beyond runtime blocking (RS.MI-02).
-   - Forensic investigation oriented to prosecution — formal evidence handling
-     and chain-of-custody (RS.AN-06/07) and environment-wide magnitude validation
-     across non-agent targets (RS.AN-08). *(Note: the agent-behavioral root cause
-     itself — RS.AN-03 — IS covered, in Stage 6 Assessment; what is missing is the
-     organizational/forensic investigation wrapper around it.)*
-   - The entire Recover Function (RC.*).
-   - **Tempo mismatch:** 800-61r3 assumes human-paced incidents; agentic cascades
-     move faster. ODESSA's kill-switch / circuit-breakers (Stage 5) are the
-     agent-speed containment that buys time for the slower organizational
-     response 800-61r3 describes.
+   criteria* (DE.AE-08). The runtime loop operates **below** that declaration
+   threshold; Stage 0 defines the crossing criteria and Stage 6 evaluates them
+   continuously.
+2. **The remaining scope gap — and the tempo bridge.** With Stage 0 and the
+   Downstream Workflow, the previously open items are covered: declaration
+   criteria (DE.AE-08) are defined in Stage 0 and continuously evaluated in
+   Stage 6; RS.CO, RS.AN-06/07/08, and RS.MI-02 are executed by the Downstream
+   Workflow; after-action reporting (RC.RP-06) closes into ID.IM. What ODESSA
+   still does not provide — deliberately — is system restoration and
+   backup-integrity verification (RC.RP-03), which defer to standard IT
+   disaster recovery, and prosecution-grade threat-actor attribution, which
+   remains an organizational/legal function. The tempo caveat stands: 800-61r3
+   assumes human-paced incidents; agentic cascades move faster. The runtime
+   kill-switch / circuit-breakers (Stage 5) are the agent-speed containment
+   that buys time for the human-paced Downstream Workflow.
 ---
 # 🏗️ Enforcement Architecture (Deployment)
 Stage 5 specifies that guardrails intercept at the **L2 ↔ L5/L6 boundary**. That
@@ -607,7 +712,8 @@ the evidence, the policy, or the emergency controls instead:
   an attacker who can edit the audit trail defeats Stage 6, the NIST mapping,
   and non-delegable accountability in a single move.
 - **The policy store MUST be writable only through an authenticated
-  change-management path** outside any agent's reach. Policy changes are
+  change-management path** — provisioned in Stage 0 — outside any agent's
+  reach. Policy changes are
   privileged actions: they MUST produce receipts of their own, attributable to
   a human principal or an authorized change process.
 - **Kill-switch invocation MUST be authenticated and authorized** against named
@@ -683,10 +789,12 @@ For each interaction, agents SHOULD produce:
 ---
 # 📎 Summary
 ODESSA provides a defensive, auditable, and agent-executable method for:
+✅ establishing governance readiness (Stage 0)
 ✅ validating sources
 ✅ detecting adversarial signals
 ✅ escalating risk
 ✅ enforcing safeguards
 ✅ learning from outcomes
+✅ executing the organizational incident response (Downstream Workflow)
 *Disclaimer: "ODESSA" is used solely as an acronym for this framework and is not
 associated with any existing organization or historical reference.*
