@@ -13,6 +13,9 @@ Architecture (Part 2), the AI Controls Matrix (AICM) ownership model (Part 3 /
 Agent 3SRM), and the OWASP Agentic Security Initiative threat taxonomy — and
 (c) references to the AARM Benchmarking Framework so each stage has a
 measurable efficacy target.
+
+<img width="1369" height="1149" alt="ChatGPT Image Jun 16, 2026, 11_19_20 AM" src="https://github.com/user-attachments/assets/4bab9d7c-f2b4-41b9-8476-9fd1524a1935" />
+
 > **Reading the mapping blocks.** Each stage carries a `📐 Framework Mapping`
 > block. Architecture layers (L1–L10) and the Agentic Control Loop phases come
 > from CSA Part 2. AICM control IDs (e.g. AIS-08, TVM-11) and responsibility
