@@ -478,6 +478,19 @@ out-of-process control point that a compromised agent cannot override.
   sensitive transactions, communications, or system updates without a mandatory
   human review step. Reviewers follow the Stage 4 *Human Reporting Protocol*;
   the STEP_UP payload carries its machine-supplied artifacts.
+* **Pre-Authorized Bounded Action Classes:** The HITL requirement admits a
+  narrow, explicit exception: an action class may be pre-authorized for
+  automated execution when it is bounded (a defined, allowlisted operation
+  set), reversible (automated rollback on failure or adverse impact), and
+  self-receipting (each execution produces its own tamper-evident record). The
+  motivating case is a defensive detect-to-remediate loop — auto-proposing and
+  deploying a patch to the organization's own infrastructure — where routing
+  every fix through a human negates the speed that made automated discovery
+  worthwhile. This is a *pre-authorized* class defined by a human in Stage 0,
+  not the agent granting itself authority; anything outside the defined class,
+  and any rollback that itself fails, falls back to HITL. The carve-out never
+  extends to externally visible actions, communications on a principal's
+  behalf, or irreversible operations.
 * **Application Guardrails:** Implement robust system-prompt hardening and apply
   content-safety guardrails to monitor runtime inputs and outputs across the
   application. Guardrails should run **out-of-process** from the agent runtime,
@@ -548,6 +561,25 @@ training signal.
   Security Maturity Model to ensure cross-functional data privacy, regulatory
   compliance, and incident-response readiness are scaling alongside agent
   capabilities.
+* **Continuous Adversarial Validation:** Supplement scripted AARM benchmarking
+  with continuous, autonomous red teaming against the organization's own
+  infrastructure — chaining vulnerabilities and probing for novel weaknesses
+  rather than replaying a fixed scenario set. The defensive rationale is
+  tempo: the same agentic capabilities that let an attacker chain exploits and
+  surface zero-days let a defender find and remediate those paths first.
+  Findings feed back into Stage 2 detection signals and Stage 0 declaration
+  criteria, closing the loop. This is a *defensive* control governed by
+  **Prohibited Uses** — the red-team agents operate only against sanctioned
+  targets under the same accountability chain as any other agent, and never
+  emit reusable exploit artifacts.
+* **Automated Remediation Loop:** Where continuous validation surfaces a
+  vulnerability, close the loop to remediation, not just to a ticket:
+  auto-propose a patch and deploy it through a pipeline with automated
+  rollback. Detection without automated remediation recreates the bottleneck
+  it was meant to remove — findings accumulate faster than humans can patch.
+  Automated deployment executes only within the **Pre-Authorized Bounded
+  Action Class** defined in Stage 5; it is bounded, reversible, and
+  self-receipting, and anything outside that class routes to HITL.
 ## 📐 Framework Mapping
 - **Architecture layers:** L9 Evaluation, Monitoring & Observability; L10
   Governance, Authority, Accountability, Risk & Compliance; L2 Cognitive Core
@@ -912,3 +944,4 @@ associated with any existing organization or historical reference.*
 Additional Sources:
 * O'Neil, J., Mears, M., & Lawler, J. C. (2026, July 8). If you can run a spy, you can run AI. *The Cipher Brief*. [https://www.thecipherbrief.com/if-you-can-run-a-spy-you-can-run-ai](https://www.thecipherbrief.com/if-you-can-run-a-spy-you-can-run-ai)
 * Mogull, R., Yu, S., Lee, R. T., Kovalsky, M., Easterly, J., Johnson, M., Reavis, J., Colao, M., Epp, S., Litvin, A., & Hayslip, G. (2026, July 27). Hugging Face incident initial post-mortem (Version 0.8) [Expedited strategy briefing]. Cloud Security Alliance. https://cloudsecurityalliance.org/artifacts/hugging-face-ciso-post-mortem
+* Black Hat. (2026). Black Hat USA 2026: The 'Breaking' News: The OpenAI–Hugging Face Incident [Video]. YouTube.
