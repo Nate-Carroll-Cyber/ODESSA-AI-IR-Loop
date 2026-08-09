@@ -12,6 +12,7 @@ Companion to the ODESSA specification. Each bullet is an action; stage reference
 - [ ] Define incident declaration criteria (thresholds that elevate a runtime event to a declared incident).
 - [ ] Prioritize security-automation investment by risk reduction and automation ROI; treat automation as a continuum, not a binary.
 - [ ] Evaluate multiple model classes (frontier and open-weight) for defensive-tooling fit; re-evaluate selections as the threat landscape shifts.
+- [ ] Audit internal evaluation, training, and sandbox environments so they do not reward agents for treating out-of-scope infrastructure as a valid path to a solution — task incentives that erode boundaries undercut the runtime controls that enforce them.
 
 **Provisioning**
 - [ ] Size the STEP_UP rate budget to actual reviewer capacity.
