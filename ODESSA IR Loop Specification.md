@@ -486,7 +486,11 @@ out-of-process control point that a compromised agent cannot override.
   motivating case is a defensive detect-to-remediate loop — auto-proposing and
   deploying a patch to the organization's own infrastructure — where routing
   every fix through a human negates the speed that made automated discovery
-  worthwhile. This is a *pre-authorized* class defined by a human in Stage 0,
+  worthwhile. The bounded execution path is staged, not direct: propose the
+  change, deploy first to staging to verify functionality and service
+  stability, roll out to production only on a clean staging result, and
+  auto-revoke on any availability incident detected post-deployment. This is a
+  *pre-authorized* class defined by a human in Stage 0,
   not the agent granting itself authority; anything outside the defined class,
   and any rollback that itself fails, falls back to HITL. The carve-out never
   extends to externally visible actions, communications on a principal's
@@ -571,14 +575,33 @@ training signal.
   criteria, closing the loop. This is a *defensive* control governed by
   **Prohibited Uses** — the red-team agents operate only against sanctioned
   targets under the same accountability chain as any other agent, and never
-  emit reusable exploit artifacts.
+  emit reusable exploit artifacts. Maturity is tracked on a five-level scale,
+  aligned with the promotion gates above:
+
+| Level | Red-team capability |
+| --- | --- |
+| 1 Manual | Vulnerability discovery is entirely human-led. |
+| 2 Assisted | Agents supply static analysis or suggestions to human testers. |
+| 3 Automated Discovery | Agents independently find flaws; humans report and verify. |
+| 4 Integrated Pipeline | Agents find *and* verify flaws, generating actionable reports. |
+| 5 Autonomous Loop | Agents discover and verify flaws and pass findings directly into the automated remediation loop below. |
+
+  A named red-team detection target at every level is **boundary-escape
+  behavior**: an agent that, when stuck on a task, reaches for external
+  repositories, searches outside its sandbox, or otherwise treats
+  out-of-scope infrastructure as a valid path to a solution. This is a Stage 2
+  boundary-probing signal surfaced deliberately, and it doubles as an audit of
+  the organization's own evaluation and training environments — sandboxes that
+  reward "solving" a task by any means can erode the very boundaries the
+  runtime loop enforces.
 * **Automated Remediation Loop:** Where continuous validation surfaces a
   vulnerability, close the loop to remediation, not just to a ticket:
   auto-propose a patch and deploy it through a pipeline with automated
   rollback. Detection without automated remediation recreates the bottleneck
-  it was meant to remove — findings accumulate faster than humans can patch.
-  Automated deployment executes only within the **Pre-Authorized Bounded
-  Action Class** defined in Stage 5; it is bounded, reversible, and
+  it was meant to remove — findings accumulate faster than humans can patch,
+  and remediation latency must be measured against attacker tempo, not against
+  a fixed SLA. Automated deployment executes only within the **Pre-Authorized
+  Bounded Action Class** defined in Stage 5; it is bounded, reversible, and
   self-receipting, and anything outside that class routes to HITL.
 ## 📐 Framework Mapping
 - **Architecture layers:** L9 Evaluation, Monitoring & Observability; L10
