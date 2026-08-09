@@ -10,6 +10,8 @@ Companion to the ODESSA specification. Each bullet is an action; stage reference
 - [ ] Issue an interim agentic-security standard: accountable owners, pre-authorized shutdown authority, spending limits, restricted tool scopes.
 - [ ] Document the information security incident management plan.
 - [ ] Define incident declaration criteria (thresholds that elevate a runtime event to a declared incident).
+- [ ] Prioritize security-automation investment by risk reduction and automation ROI; treat automation as a continuum, not a binary.
+- [ ] Evaluate multiple model classes (frontier and open-weight) for defensive-tooling fit; re-evaluate selections as the threat landscape shifts.
 
 **Provisioning**
 - [ ] Size the STEP_UP rate budget to actual reviewer capacity.
@@ -53,6 +55,7 @@ Companion to the ODESSA specification. Each bullet is an action; stage reference
 - [ ] Apply compositional (taint/egress) limits session-wide across all agents serving the same intent.
 - [ ] Implement kill-switch and circuit-breaker states with authenticated, receipted, scoped invocation.
 - [ ] Mandate HITL checkpoints for sensitive transactions, communications, and system changes.
+- [ ] Enforce strict network and system segmentation so a compromised agent cannot move laterally, exploit misconfigured service accounts, or harvest cluster-wide vault credentials.
 
 **Protecting the protector**
 - [ ] Make receipts and decision records append-only and tamper-evident (hash-chained or WORM).
@@ -86,6 +89,12 @@ Companion to the ODESSA specification. Each bullet is an action; stage reference
 - [ ] Run promotion gates on auditable behavior; track against the maturity model.
 - [ ] Benchmark against AARM metrics (detection rate, FP rate, step-up calibration, escalation volume, receipt completeness, latency) — benchmark, don't just conformance-check.
 
+**Continuous adversarial validation**
+- [ ] Run continuous, autonomous red teaming against your own infrastructure — chain-and-discover, not just scripted scenario replay — and remediate what it finds before external actors do.
+- [ ] Feed red-team findings back into Stage 2 detection signals and Stage 0 declaration criteria.
+- [ ] Close the detect-to-remediate loop: on a discovered vulnerability, auto-propose a patch and deploy through a pipeline with automated rollback on availability impact — manual-only patching inundates engineers and negates automated discovery.
+- [ ] Scope automated patch deployment as a pre-authorized, bounded, reversible action class with its own receipts — this is the sanctioned exception to the Stage 5 HITL-on-system-changes rule, not a contradiction of it; anything outside the bounded class still routes to HITL.
+
 ---
 
 ## Phase 4 — Respond (Downstream Workflow, post-declaration)
@@ -96,6 +105,7 @@ Companion to the ODESSA specification. Each bullet is an action; stage reference
 - [ ] Validate magnitude environment-wide across non-agent systems.
 - [ ] Conduct after-action review; feed lessons to Stage 0 (criteria/policy) and Stage 6 (learning).
 - [ ] Treat any manual global kill-switch activation as a declarable event.
+- [ ] Deploy defensive agents to parse, correlate, and triage incident-window telemetry at machine scale, so human responders can match the tempo of concurrent multi-agent attacks rather than drowning in forensically dense log volume.
 
 ---
 
