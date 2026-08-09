@@ -59,6 +59,26 @@ before any agent is deployed.
   drift) that elevate a managed runtime event into a declared organizational
   incident. Stage 6 evaluates these continuously; the *Out-of-Band Downstream
   Workflow* executes when they are crossed.
+- Integrate agentic autonomy into organizational risk management and
+  compliance programs as a **named risk**, with an interim agentic-security
+  standard that defines accountable owners holding pre-authorized shutdown
+  authority (Stage 5 kill-switch roles), spending limits, and restricted
+  tool scopes.
+- Establish **two distinct agentic response postures** ahead of deployment:
+  one for the organization as victim of an agentic attack, one for the
+  organization's own agent causing harm to a third party. Both are executed
+  by the *Out-of-Band Downstream Workflow*; Stage 0 provisions the teams,
+  authorities, and communication plans each requires.
+- **Pre-provision incident tooling.** Verify — before any incident — that
+  responders have tested, operational access to the analysis and forensic
+  tooling an agentic incident requires, including AI-assisted telemetry
+  correlation at machine scale, and that fallback tooling is validated for
+  availability under incident conditions. Tooling discovered to be
+  unavailable, unlicensed, or refused mid-incident is a Stage 0 failure,
+  not an incident-response failure.
+- Exercise the incident-management plan with **agentic-AI tabletop
+  scenarios** (autonomous attack, persistent malicious agent activity,
+  tooling unavailability during forensics) before production deployment.
 ## Constraints (MUST NOT)
 - MUST NOT deploy autonomous agents into production without a tested intake
   channel for external adverse-impact reports.
@@ -71,6 +91,8 @@ before any agent is deployed.
 - **ISO/IEC 42001:2023:** A.8.3 (External reporting).
 - **NIST SP 800-61r3:** Govern (GV) and the preparation phases of incident
   response.
+- **NIST SP 800-61r3:** GV.RM (agentic autonomy as a named enterprise
+  risk); PR/RS preparation via pre-provisioned tooling and exercised plans.
 ---
 # 👁️ Stage 1 — Observation
 ## Goal
@@ -112,6 +134,20 @@ inferring intent.
 - Record action provenance for every agent action, tool invocation, and
   sub-agent spawn, linking each to the acting agent identity and, ultimately,
   to the Agent Owner.
+- Baseline the **agentic cadence** of each deployed agent platform — the
+  signature rhythm of its loops, tool-call intervals, and burst patterns —
+  as an observable characteristic. Cadence baselines feed Stage 2 anomaly
+  detection; deviation from a platform's known rhythm is a recorded signal,
+  not an inference.
+- Capture **trajectory-level telemetry**: correlate activity across agents,
+  sessions, and systems serving the same anchored intent so that egress
+  events and objective departures are observable at the trajectory level,
+  not only per action. (Stage 2 evaluates these trajectories; Stage 5
+  enforces session-wide compositional limits against them.)
+- Distinguish and tag **agent-generated noise** (malformed commands, failed
+  retries, degenerate loops) at capture time so forensic volume is not
+  inflated and Stage 6 analysis can discard it without losing the receipt
+  trail.
 ## Constraints (MUST NOT)
 - MUST NOT infer intent at this stage.
 - MUST NOT modify user intent beyond sanitization.
@@ -148,7 +184,9 @@ inferring intent.
   for its own delivery layer.
 - **AARM coverage:** *Receipt completeness* metric (every intercepted action,
   including deferred actions, produces a receipt with all required fields, even
-  under 50/200/500-action session load).
+  under 50/200/500-action session load). Cadence and trajectory telemetry
+  extend the receipt substrate to cross-agent correlation (Cross-Agent
+  Propagation scenario set).
 ---
 # 🔍 Stage 2 — Detection
 ## Goal
@@ -199,6 +237,26 @@ single-turn heuristics alone.
   tool calls; preservation of labels through in-context transforms (summary,
   paraphrase) is a SHOULD with known research limitations — benchmarked (see
   AARM alignment), not assumed.
+## 🪤 Deception Instrumentation
+Deception assets are Stage 2 detectors with near-zero false-positive rates:
+no legitimate workflow touches a decoy, so any interaction is a
+high-confidence adversarial signal.
+* **Decoy Deployment:** Deploy deception assets across the stack — fake
+  identities, canary credentials, decoy package registries, honey datasets,
+  honey APIs, and honey clusters — indistinguishable from production
+  equivalents.
+* **Canary Credentials:** Instrument monitored canary credentials in the
+  locations agents and attackers enumerate (configuration, memory stores,
+  tool outputs, vaults' decoy entries).
+* **Immediate Containment Routing:** Any decoy interaction bypasses normal
+  L0–L3 triage and routes directly to Stage 5 containment (BLOCK +
+  circuit-breaker eligible) — decoy contact is definitionally ≥ L3.
+* **Decoy Inventory:** Maintain an authoritative decoy inventory,
+  access-controlled in the control plane, so Stage 6 and the Downstream
+  Workflow can separate real impact from fabricated artifacts during
+  assessment and evidence collection. The inventory is a *Protecting the
+  Protector* asset: an attacker who reads it defeats the entire deception
+  layer.
 ## 📐 Framework Mapping
 - **Architecture layers:** L8 Safety & Security (primary — input filtering,
   threat detection); L9 Monitoring & Observability (baseline comparison, anomaly
@@ -215,6 +273,9 @@ single-turn heuristics alone.
 - **AARM coverage:** *Detection rate* (primary metric). Scenario sets:
   Prompt Injection (direct + indirect), Goal Hijacking, Intent Drift,
   Confused Deputy, Compositional Data Exfiltration.
+- Deception instrumentation: maps to DE.CM (NIST CSF 2.0) as a
+  high-confidence event source; decoy inventory access control anchors to
+  *Protecting the Protector*.
 ---
 # ⚠️ Stage 3 — Escalation (Triage)
 ## Goal
@@ -694,10 +755,10 @@ declaration.
 ## Function-by-function crosswalk
 | CSF 2.0 Function | ODESSA Stage(s) | Alignment notes |
 | --- | --- | --- |
-| **GV — Govern** | 0 Governance & Readiness; Agent Owner accountability; Prohibited Uses; Output Contract | Stage 0's incident-management plan, reporting channels, and declaration criteria map to GV and preparation (ISO 27002 5.24/6.8; ISO 42001 A.8.3). Maps to GV.PO (policy), GV.RR (roles/authorities), GV.SC (supply chain). 800-61r3 §2.2's shared-responsibility-with-contract framing mirrors the 3SRM role split; GV.RM-03 already lists **AI** among the risk types IR decisions must consider. |
+| **GV — Govern** | 0 Governance & Readiness; Agent Owner accountability; Prohibited Uses; Output Contract | Stage 0's incident-management plan, reporting channels, and declaration criteria map to GV and preparation (ISO 27002 5.24/6.8; ISO 42001 A.8.3). Maps to GV.PO (policy), GV.RR (roles/authorities), GV.SC (supply chain). 800-61r3 §2.2's shared-responsibility-with-contract framing mirrors the 3SRM role split; GV.RM-03 already lists **AI** among the risk types IR decisions must consider — Stage 0's named-risk integration and interim agentic-security standard operationalize exactly that expectation. |
 | **ID — Identify** | 1 Observation | Agent identity, manifests, capability declarations, and BOM map to ID.AM asset inventory (incl. detecting **shadow agents**, the agentic analogue of "shadow IT"). Stage 2–3 threat modeling maps to ID.RA. |
 | **PR — Protect** | 4 Source Validation, 5 Safeguard | ODESSA's center of gravity. Maps to PR.AA (least privilege / separation of duties, PR.AA-05), PR.PS (platform / sandbox), PR.DS (data integrity at-rest / in-transit / in-use). |
-| **DE — Detect** | 2 Detection (+ 1 telemetry) | Maps to DE.CM (continuous monitoring) and DE.AE (adverse-event analysis). ODESSA is an **event source**: its receipts and decision records are the structured feed into SIEM/SOAR correlation. Stage 0 defines — and Stage 6 continuously evaluates — the DE.AE-08 declaration criteria. |
+| **DE — Detect** | 2 Detection (+ 1 telemetry) | Maps to DE.CM (continuous monitoring) and DE.AE (adverse-event analysis). ODESSA is an **event source**: its receipts and decision records are the structured feed into SIEM/SOAR correlation. Deception instrumentation (Stage 2) adds a near-zero-false-positive event class to DE.CM. Stage 0 defines — and Stage 6 continuously evaluates — the DE.AE-08 declaration criteria. |
 | **RS — Respond** | 3 Escalation; 5 Safeguard (BLOCK, kill-switch); 6 Assessment; Downstream Workflow | Stage 3 HITL routing maps to RS.MA (triage/prioritize/escalate); BLOCK + circuit-breakers map to RS.MI-01 (containment); owner-chain receipts feed RS.AN-06/07 (integrity & provenance of records and incident data). **Stage 6 covers the agent-behavioral portion of RS.AN-03 (root-cause analysis)** via explainability audits and delegation-chain cascade attribution. The Downstream Workflow adds RS.CO (communications), formal forensic collection with chain-of-custody (RS.AN-06/07), environment-wide magnitude validation (RS.AN-08), and eradication (RS.MI-02). Prosecution-grade threat-actor attribution remains an organizational/legal function. |
 | **RC — Recover** | Downstream Workflow (partial) | *Partial.* After-action reporting (RC.RP-06) is covered by the Downstream Workflow and feeds ID.IM. System restoration and backup-integrity verification (RC.RP-03) remain out of scope by design, deferring to standard IT disaster recovery. |
 | **ID.IM — Improvement** | 6 Assessment; Downstream Workflow (after-action) | Strong alignment. Curated training, promotion gates, and drift detection are the continuous-improvement loop where lessons feed into and adjust all Functions at all times. RS.AN-03's recurrence-prevention note (identifying weaknesses so similar incidents are avoided) also lands here — Stage 6 straddles Respond-analysis and Improvement. |
@@ -758,6 +819,9 @@ the evidence, the policy, or the emergency controls instead:
   roles, MUST itself produce a receipt, and SHOULD support scoped activation
   (per-agent, per-cluster, global) so the switch functions as containment
   rather than as an unauthenticated global denial-of-service lever.
+- **The decoy inventory (Stage 2) MUST be access-controlled in the control
+  plane** — disclosure of decoy locations defeats the deception layer as a
+  detection source.
 > This section describes the architectural options the framework's interception
 > point implies; it is not a prescription of a specific product or vendor.
 ---
@@ -839,3 +903,4 @@ associated with any existing organization or historical reference.*
 
 Additional Sources:
 * O'Neil, J., Mears, M., & Lawler, J. C. (2026, July 8). If you can run a spy, you can run AI. *The Cipher Brief*. [https://www.thecipherbrief.com/if-you-can-run-a-spy-you-can-run-ai](https://www.thecipherbrief.com/if-you-can-run-a-spy-you-can-run-ai)
+* Mogull, R., Yu, S., Lee, R. T., Kovalsky, M., Easterly, J., Johnson, M., Reavis, J., Colao, M., Epp, S., Litvin, A., & Hayslip, G. (2026, July 27). Hugging Face incident initial post-mortem (Version 0.8) [Expedited strategy briefing]. Cloud Security Alliance. https://cloudsecurityalliance.org/artifacts/hugging-face-ciso-post-mortem
