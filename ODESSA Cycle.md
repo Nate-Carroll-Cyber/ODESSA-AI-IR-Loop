@@ -630,6 +630,7 @@ different angles. The crosswalks below align them.
 | 5. Safeguard | Control |
 | 6. Assessment | Monitor + Assure |
 | Downstream Workflow | Assure (post-incident, out-of-band) |
+
 ## ODESSA → Primary Architecture Layers
 | ODESSA Stage | Primary Layer(s) | Supporting Layer(s) |
 | --- | --- | --- |
@@ -641,6 +642,7 @@ different angles. The crosswalks below align them.
 | 5. Safeguard | L8 Safety & Security | L7 Identity, L6 Tools, L5 Execution, L10 Governance |
 | 6. Assessment | L9 Monitoring, L10 Governance | L2 Cognitive Core |
 | Downstream Workflow | L10 Governance | L9 Monitoring (evidence source) |
+
 > Layers L7–L10 (CSA Domain 3) are **horizontal / cross-cutting** — they span
 > every operational layer. ODESSA inherits that property: Identity (L7), Safety
 > (L8), Monitoring (L9), and Governance (L10) concerns recur across most stages
@@ -652,8 +654,10 @@ different angles. The crosswalks below align them.
 | CONSTRAIN | ALLOW (limited / least-disclosure) | L2 Suspicious but low-impact |
 | ROUTE_TO_HITL | DEFER / STEP_UP | L2 ambiguous high-risk — human in the loop |
 | BLOCK | DENY (forbidden or context-dependent) | L3 Adversarial / forbidden action |
+
 ## ODESSA Maturity ↔ Agent Security Maturity Model (Part 2 §3.4)
 ODESSA capability deepens with organizational maturity:
+
 | Maturity Level | ODESSA Capability Present |
 | --- | --- |
 | L0 Unaware | None — no Observation substrate |
@@ -662,6 +666,7 @@ ODESSA capability deepens with organizational maturity:
 | L3 Type-Specific Governance | Stage 3 tiered autonomy, risk-calibrated escalation |
 | L4 Runtime Monitoring | Stage 2 behavioral baselines + drift detection |
 | L5 Continuous Assurance | Stage 6 promotion gates, benchmarking, re-certification |
+
 ---
 # 📊 AARM Benchmarking Alignment
 Conformance answers *"can this system deny a forbidden action when presented a
@@ -762,6 +767,7 @@ declaration.
 | **RS — Respond** | 3 Escalation; 5 Safeguard (BLOCK, kill-switch); 6 Assessment; Downstream Workflow | Stage 3 HITL routing maps to RS.MA (triage/prioritize/escalate); BLOCK + circuit-breakers map to RS.MI-01 (containment); owner-chain receipts feed RS.AN-06/07 (integrity & provenance of records and incident data). **Stage 6 covers the agent-behavioral portion of RS.AN-03 (root-cause analysis)** via explainability audits and delegation-chain cascade attribution. The Downstream Workflow adds RS.CO (communications), formal forensic collection with chain-of-custody (RS.AN-06/07), environment-wide magnitude validation (RS.AN-08), and eradication (RS.MI-02). Prosecution-grade threat-actor attribution remains an organizational/legal function. |
 | **RC — Recover** | Downstream Workflow (partial) | *Partial.* After-action reporting (RC.RP-06) is covered by the Downstream Workflow and feeds ID.IM. System restoration and backup-integrity verification (RC.RP-03) remain out of scope by design, deferring to standard IT disaster recovery. |
 | **ID.IM — Improvement** | 6 Assessment; Downstream Workflow (after-action) | Strong alignment. Curated training, promotion gates, and drift detection are the continuous-improvement loop where lessons feed into and adjust all Functions at all times. RS.AN-03's recurrence-prevention note (identifying weaknesses so similar incidents are avoided) also lands here — Stage 6 straddles Respond-analysis and Improvement. |
+
 ## Two caveats built into this mapping
 1. **Naming collision — escalation and detection mean different things.**
    ODESSA "Escalation" is *per-action risk triage routing to a human*;
@@ -790,10 +796,12 @@ Stage 5 specifies that guardrails intercept at the **L2 ↔ L5/L6 boundary**. Th
 is two distinct boundaries with different right answers, so "API gateway *or*
 sidecar" is a false binary — a production deployment is a **hybrid**, with the
 enforcement point chosen per boundary:
+
 | Boundary | Enforcement point | Why |
 | --- | --- | --- |
-| Tool / inter-agent **egress** (TaaS, MCP, A2A) | **API / MCP gateway** | Centralized, auditable choke point for tool calls and agent-to-agent traffic; natural home for Stage 4 source validation of tool I/O and Stage 5 tool-boundary enforcement. |
-| **Inference / reasoning-step** boundary (prompts and outputs to/from the cognitive core) | **Sidecar / out-of-process proxy in front of the model endpoint** | A network-egress gateway never sees the prompt/output exchange with L2; only a proxy at the inference boundary can screen inputs before the model reads them and outputs before they act. |
+| Tool / inter-agent egress (TaaS, MCP, A2A) | API / MCP gateway | Centralized, auditable choke point for tool calls and agent-to-agent traffic; natural home for Stage 4 source validation of tool I/O and Stage 5 tool-boundary enforcement. |
+| Inference / reasoning-step boundary (prompts and outputs to/from the cognitive core) | Sidecar / out-of-process proxy in front of the model endpoint | A network-egress gateway never sees the prompt/output exchange with L2; only a proxy at the inference boundary can screen inputs before the model reads them and outputs before they act. |
+
 The non-negotiable constraint, regardless of topology, is the one the Stage 1
 and Global Principles changes make explicit: **whatever enforces policy must hold
 its own copy of the immutable intent and the active policy, and must sit outside
