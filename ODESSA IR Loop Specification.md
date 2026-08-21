@@ -954,10 +954,13 @@ the evidence, the policy, or the emergency controls instead:
   safety. Two structural controls follow. The evaluator MUST be **stateless
   per action**: it receives the control-plane-held anchored intent, the action
   under review, and control-plane-computed session state (taint, cadence,
-  trajectory features) — never the accumulating raw session content, since
-  carried adversarial prose re-argues its case on every evaluation, which is
-  precisely the adaptive-persuader condition under which judge retention
-  collapses. The evaluator SHOULD be a **different model — preferably a
+  trajectory features) — never the accumulating raw session content. Two
+  independent lines of evidence converge on this: carried adversarial prose
+  re-argues its case on every evaluation, which is precisely the
+  adaptive-persuader condition under which judge retention collapses (Zhao et
+  al., 2026), and a misaligned message present in a model's context window
+  raises the odds of that model's own outputs being misaligned by 1.6x —
+  contamination, independent of persuasion (Li et al., 2026). The evaluator SHOULD be a **different model — preferably a
   different provider — from the monitored agent**: persuaders are measurably
   more effective against their own model (self-persuasion up to 70% vs. 47%
   cross-provider), so a same-model agent/judge pairing is a distinct risk
@@ -1026,3 +1029,4 @@ Additional Sources:
 * Mogull, R., Yu, S., Lee, R. T., Kovalsky, M., Easterly, J., Johnson, M., Reavis, J., Colao, M., Epp, S., Litvin, A., & Hayslip, G. (2026, July 27). Hugging Face incident initial post-mortem (Version 0.8) [Expedited strategy briefing]. Cloud Security Alliance. https://cloudsecurityalliance.org/artifacts/hugging-face-ciso-post-mortem
 * Black Hat. (2026). Black Hat USA 2026: The 'Breaking' News: The OpenAI–Hugging Face Incident [Video]. YouTube.
 * Zhao, J., Bhattacharjee, H., Korevaar, H., Radharapu, B., & El-Arini, K. (2026). Jagged Judges: Epistemic Stability Under Silence, Pressure, and Persistence. Meta Superintelligence Labs. [arXiv:2608.12645v1]
+* Li, Z., Petersson, L., Acquisti, A., & Bakker, M. A. (2026). Emergent Misaligned Communication in Long-Horizon Multi-Agent LLM Commerce. [arXiv:2608.14825v1]
