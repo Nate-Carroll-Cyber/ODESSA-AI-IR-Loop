@@ -249,19 +249,59 @@ no legitimate workflow touches a decoy, so any interaction is a
 high-confidence adversarial signal.
 * **Decoy Deployment:** Deploy deception assets across the stack — fake
   identities, canary credentials, decoy package registries, honey datasets,
-  honey APIs, and honey clusters — indistinguishable from production
-  equivalents.
+  honey APIs, and honey clusters. **Fidelity is calibrated to attacker class,
+  not fixed at maximum.** Frontier agents exhibit a recognition-action gap —
+  they place exploit marks on elements they have *explicitly* flagged as
+  suspected traps in their own reasoning (Prinos et al., 2026) — and several
+  target deceptive lines *first*, so low-cost bait both catches them and yields
+  early-warning lead time. Cyber-specialized offensive fine-tunes are caught by
+  traps at comparable rates but prioritize by underlying resource class rather
+  than trap-similarity, so they seldom hit bait on their *opening* move —
+  which erodes the lead time the Immediate Containment Routing below is meant to
+  buy. Decoys aimed at that class MUST therefore emulate the high-value resource
+  types those models prioritize first (executables, key material, credential-
+  bearing files), not merely be present. Provision both tiers rather than
+  assuming one fidelity defeats all attackers.
 * **Canary Credentials:** Instrument monitored canary credentials in the
   locations agents and attackers enumerate (configuration, memory stores,
   tool outputs, vaults' decoy entries).
+* **Behavioral Fingerprinting at Contact:** A decoy touch is the highest-
+  confidence observation vantage in the pipeline — extract the acting agent's
+  behavioral signature at the point of contact *before* containment severs the
+  session. This is a tagging step over telemetry Stage 1 has already captured
+  (agentic cadence, trajectory features), **not** an extension of the
+  attacker's runtime: it MUST NOT delay or gate the Immediate Containment
+  Routing below. Recorded discriminators — inference-pause/burst rhythm,
+  mid-session tool or user-agent pivots, adaptive strategy shifts keyed to the
+  decoy's responses — feed Stage 1 cadence baselines and Stage 6 attribution.
+  Specific signature profiles are deployment-dependent and MUST be validated
+  against the organization's own agent platforms before being used as
+  discriminators.
+* **Honey-Agents:** Extend deception into the L7 identity and inter-agent (A2A)
+  plane. Register decoy agents advertising attractive, out-of-scope
+  capabilities (e.g. an unrestricted financial or payroll interface) in the
+  agent naming / discovery layer. A capability query or interaction from an
+  agent whose declared scope (Stage 1) does not include that capability is a
+  high-confidence T13 (Rogue Agents) signal — surfaced before any production
+  data is touched. Honey-agent contact routes to containment and MUST trigger
+  the Stage 5 JIT credential-revocation path for the querying agent, not merely
+  a log entry.
+* **Tool-Interface Decoys:** Place decoy tools and decoy parameters inside the
+  agent's own tool manifest (L6), alongside the canary credentials seeded in
+  config and memory. Invocation of a decoy tool — or use of an allowlisted-but-
+  fabricated parameter — is a T2 (Tool Misuse) signal originating *inside* the
+  agent's declared capability surface rather than in the surrounding
+  infrastructure, catching misuse that infrastructure-level decoys never see.
 * **Immediate Containment Routing:** Any decoy interaction bypasses normal
   L0–L3 triage and routes directly to Stage 5 containment (BLOCK +
   circuit-breaker eligible) — decoy contact is definitionally ≥ L3.
-* **Decoy Inventory:** Maintain an authoritative decoy inventory,
+* **Decoy Inventory:** Maintain an authoritative decoy inventory — covering
+  honey-agents and decoy tools as well as infrastructure decoys —
   access-controlled in the control plane, so Stage 6 and the Downstream
   Workflow can separate real impact from fabricated artifacts during
   assessment and evidence collection. The inventory is a *Protecting the
   Protector* asset: an attacker who reads it defeats the entire deception
+  layer.defeats the entire deception
   layer.
 ## 📐 Framework Mapping
 - **Architecture layers:** L8 Safety & Security (primary — input filtering,
@@ -281,7 +321,12 @@ high-confidence adversarial signal.
   Confused Deputy, Compositional Data Exfiltration.
 - Deception instrumentation: maps to DE.CM (NIST CSF 2.0) as a
   high-confidence event source; decoy inventory access control anchors to
-  *Protecting the Protector*.
+  *Protecting the Protector*. Honey-agents extend deception to L7 / IAM and the
+  agent-naming discovery layer (T13 Rogue Agents), with containment via the
+  Stage 5 JIT revocation path; tool-interface decoys extend it to L6 (T2 Tool
+  Misuse). Behavioral fingerprinting at contact feeds the Stage 1
+  cadence/trajectory substrate and Stage 6 attribution (extends the Cross-Agent
+  Propagation receipt set).
 ---
 # ⚠️ Stage 3 — Escalation (Triage)
 ## Goal
@@ -1030,3 +1075,4 @@ Additional Sources:
 * Black Hat. (2026). Black Hat USA 2026: The 'Breaking' News: The OpenAI–Hugging Face Incident [Video]. YouTube.
 * Zhao, J., Bhattacharjee, H., Korevaar, H., Radharapu, B., & El-Arini, K. (2026). Jagged Judges: Epistemic Stability Under Silence, Pressure, and Persistence. Meta Superintelligence Labs. [arXiv:2608.12645v1]
 * Li, Z., Petersson, L., Acquisti, A., & Bakker, M. A. (2026). Emergent Misaligned Communication in Long-Horizon Multi-Agent LLM Commerce. [arXiv:2608.14825v1]
+* Prinos, K., Brush, L., & Denton, C. (2026). Honeyquest for LLMs: Rethinking Cyber Deception for AI Attackers. Horizon3.ai. [arXiv:2606.21037v1]
