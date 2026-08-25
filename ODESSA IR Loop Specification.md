@@ -522,8 +522,12 @@ out-of-process control point that a compromised agent cannot override.
   every per-action evaluation is a fresh sample of the evaluator: even the
   mechanical verdict-variation floor of frontier LLM judges (2–9% per trial)
   compounds across retries into an eventual ALLOW, and reframed retries
-  outperform mechanical noise (Zhao et al., 2026). Fail-secure does not cover
-  this on its own — each retry presents as a clean new action.
+  outperform mechanical noise (Zhao et al., 2026). Cascade resolution enforces
+  the uncertainty invariant: any condition that raises uncertainty about agent
+  state or environment (low jury majority, conflicting telemetry, provenance
+  failure, evaluator disagreement) maps only to authority-decreasing outcomes
+  — STEP_UP, freeze, or revoke — never to default-allow. Fail-secure does not
+  cover this on its own — each retry presents as a clean new action.
 ## Constraints (MUST NOT)
 - MUST NOT provide internal configuration details.
 - MUST NOT produce step-by-step harmful or exploitative guidance.
