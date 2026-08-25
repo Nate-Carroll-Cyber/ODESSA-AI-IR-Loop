@@ -618,6 +618,7 @@ training signal.
 - false positive / false negative indicators
 - (See **AARM Benchmarking Alignment** below for the full benchmarked metric
   set and tier targets.)
+-  Sample and review a random fraction of traffic the pipeline did not flag (negative-space sampling). Unflagged traffic is the only place a false negative can live, so absence of alerts is never treated as evidence of safety; sampled misses feed the false-negative indicator and Stage 2 signal refinement.
 ## Constraints (MUST NOT)
 - MUST NOT use evaluation data to weaken safeguards.
 - MUST NOT expose sensitive datasets publicly.
@@ -631,6 +632,7 @@ training signal.
   Security Maturity Model to ensure cross-functional data privacy, regulatory
   compliance, and incident-response readiness are scaling alongside agent
   capabilities.
+* **Passive Canary Regression:** Run a fixed, reproducible suite of canary prompts through the production configuration on a continuous schedule, each with a predetermined safe outcome — a guardrail block on a probe that should be blocked is a PASS. Alert when an expected protection fails, and correlate failures against model version, configuration changes, guardrail state, and retrieval-boundary changes to localize the cause. Canary probes are passive and non-adaptive: no mutating prompts, no conversational pressure, and no automated blocking driven solely by a canary result — findings route to review, not enforcement. This is the deterministic counterpart to the adversarial validation below: the red-team loop finds novel paths, the canary suite detects silent drift in protections already relied on.  
 * **Continuous Adversarial Validation:** Supplement scripted AARM benchmarking
   with continuous, autonomous red teaming against the organization's own
   infrastructure — chaining vulnerabilities and probing for novel weaknesses
