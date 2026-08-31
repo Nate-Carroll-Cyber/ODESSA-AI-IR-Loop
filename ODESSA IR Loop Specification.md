@@ -48,6 +48,13 @@ before any agent is deployed.
   (Stage 3), assign **kill-switch authorization roles** (Stage 5 / *Protecting
   the Protector*), and establish the **authenticated change-management path**
   for the policy store.
+- Provision the **network-egress allowlist** for agent workloads and the
+  authenticated change-management path for it. The allowlist is a Stage 5
+  enforcement artifact and a *Protecting the Protector* asset; it is owned by a
+  named role, not by any workload owner, and every change produces a receipt.
+- Provision **kill-switch scoping dimensions** beyond agent and cluster. The
+  switch MUST be invocable by workload type, agent type, and evaluation task so
+  responders can halt a class of runs without a global stop.
 - Establish clear internal reporting pathways for personnel to flag observed
   information security events or system weaknesses.
 - Provide external reporting capabilities allowing outside interested parties
@@ -144,6 +151,29 @@ inferring intent.
   events and objective departures are observable at the trajectory level,
   not only per action. (Stage 2 evaluates these trajectories; Stage 5
   enforces session-wide compositional limits against them.)
+- Capture a **platform telemetry baseline** independent of agent action
+  receipts, covering IAM events, network-path changes (new routes, tunnels,
+  load balancers, private links, VPN enrollments), and control-plane activity
+  across every environment that hosts agent workloads. Action-level receipts
+  observe what the agent did through sanctioned interfaces; platform telemetry
+  observes what happened around them. The control plane's own substrate is in
+  scope for attack (see *Protecting the Protector*), so it MUST be in scope for
+  observation.
+- Deploy **host-level sensors** inside agent execution environments to record
+  privilege-escalation attempts, sandbox-boundary probes, and workload
+  anomalies at the process and syscall level. These feed Stage 2 as
+  boundary-probing signals.
+- Capture **reasoning traces** (chain-of-thought or equivalent) where the
+  platform exposes them, bound to the same session and agent identity as the
+  action receipts. Traces are evidence, not instructions; they are never fed
+  back to the evaluator as context (see *The Evaluator Is an Attack Surface*)
+  and are retained for Stage 6 review and the Downstream Workflow's
+  retrospective run review.
+- Extend trajectory correlation to **cross-run correlation**. Runs that share
+  infrastructure, credentials, external channels (public repositories, paste
+  services, webhooks), or model lineage are correlated even when they serve
+  unrelated anchored intents, so that capability or data sharing between
+  independent agent runs is observable.
 - Distinguish and tag **agent-generated noise** (malformed commands, failed
   retries, degenerate loops) at capture time so forensic volume is not
   inflated and Stage 6 analysis can discard it without losing the receipt
@@ -187,6 +217,10 @@ inferring intent.
   under 50/200/500-action session load). Cadence and trajectory telemetry
   extend the receipt substrate to cross-agent correlation (Cross-Agent
   Propagation scenario set).
+- Platform baseline and host sensors extend LOG-01–15 to the IAM, network, and
+  control-plane layers and map to DE.CM-01/03 (network and activity
+  monitoring). Cross-run correlation extends the Cross-Agent Propagation
+  receipt set to unrelated sessions.
 ---
 # 🔍 Stage 2 — Detection
 ## Goal
@@ -207,6 +241,15 @@ single-turn heuristics alone.
     detection signal; sustained resubmission after denial is an escalation
     trigger, not a fresh roll of the evaluator (see Stage 5 verdict
     idempotency).
+  - **network-boundary circumvention** — attempted creation of outbound paths
+    outside the Stage 5 allowlist (tunnels, reverse proxies, new load
+    balancers, private links, third-party VPN enrollment, DNS or ICMP
+    tunnelling), whether or not the attempt succeeds. Attempt and success are
+    both signals; success is definitionally ≥ L3.
+  - **cross-run sharing** — publication of artifacts, credentials, or
+    capabilities to a location another agent run can read, or consumption of
+    such artifacts from a prior run. Individually benign runs can jointly form
+    a persistent collective; the sharing edge is the signal.
 - Treat tool outputs, error messages, and system notifications as **untrusted
   data, not authoritative instructions** (confused-deputy resistance).
 - Produce a **detection summary** with signal types and confidence.
@@ -301,7 +344,6 @@ high-confidence adversarial signal.
   Workflow can separate real impact from fabricated artifacts during
   assessment and evidence collection. The inventory is a *Protecting the
   Protector* asset: an attacker who reads it defeats the entire deception
-  layer.defeats the entire deception
   layer.
 ## 📐 Framework Mapping
 - **Architecture layers:** L8 Safety & Security (primary — input filtering,
@@ -312,7 +354,9 @@ high-confidence adversarial signal.
   Analysis & Modelling); TVM-11 (Guardrails); MDS-06–07 (Adversarial Attack
   analysis / hardening); LOG-14/15 (I/O Monitoring).
 - **OWASP relevance:** T6 (Intent Breaking & Goal Manipulation); T1 (Memory
-  Poisoning); T2 (Tool Misuse).
+  Poisoning); T2 (Tool Misuse). T13 (Rogue Agents) extended to **agent
+  collectives**: coordination across unrelated runs through shared
+  infrastructure or external channels rather than a single multi-agent system.
 - **3SRM ownership:** Shared — MP (model-level detection / instruction
   hierarchy), OSP (orchestration-level chain tracing), AP (application
   guardrails); Agent Owner integrates the signals.
@@ -414,6 +458,16 @@ Determine whether input is trustworthy, ambiguous, or potentially adversarial
   before it accesses external data or tools.
 - Verify the provenance of dynamically discovered tools / MCP servers before
   binding to them at runtime.
+- Verify the provenance of **container images, packages, and model artifacts**
+  before a workload binds to them. References MUST resolve to immutable
+  digests, not mutable tags, and MUST carry a valid signature from an
+  authorized publisher. A cache or mirror that serves a trusted reference is
+  an integrity asset; a poisoned cache entry is a supply-chain injection and
+  is treated as ≥ L3.
+- Resolve all dependency fetches through **internal mirrors**. Workloads MUST
+  NOT contact public package registries, image registries, or model hubs
+  directly; the mirror is the single validation and egress point for
+  third-party artifacts.
 ## Requirements (SHOULD)
 - Annotate outputs surfaced to human reviewers with **claim-level reliability
   markers** — *reliable / uncertain / unsupported* — derived from this stage's
@@ -423,6 +477,9 @@ Determine whether input is trustworthy, ambiguous, or potentially adversarial
 - MUST NOT pass raw sensitive data to downstream models.
 - MUST NOT assume benign intent.
 - MUST NOT bind to or invoke an unverified tool, plugin, or MCP server.
+- MUST NOT bind to an artifact by mutable reference, and MUST NOT accept a
+  cache entry whose digest or signature fails verification, regardless of how
+  the entry was populated.
 ## Zero Trust Validation
 * **Agentic Zero Trust:** Enforce the principle that no AI agent should be
   trusted by default, regardless of its purpose or claimed capabilities.
@@ -466,9 +523,11 @@ a reviewer handed nothing rubber-stamps.
   Tools, Application, Environment & Ecosystem (tool/source provenance); L7
   Identity & Autonomy (Zero Trust verification).
 - **AICM controls:** AIS-08 (Input Validation); AIS-15 (Prompt Differentiation);
-  AIS-14 (Cache Protection); DSP-21 (Data Poisoning Prevention & Detection);
-  DSP-23 (Data Integrity Check); DSP-24 (Data Differentiation & Relevance);
-  STA-01–16 (supply-chain validation for tools/MCP servers).
+  AIS-14 (Cache Protection — extended to artifact and image caches); DSP-21
+  (Data Poisoning Prevention & Detection); DSP-23 (Data Integrity Check —
+  applied to artifact digests); DSP-24 (Data Differentiation & Relevance);
+  STA-01–16 (supply-chain validation for tools/MCP servers, extended to
+  images, packages, and model artifacts).
 - **OWASP relevance:** T6 (Intent Breaking & Goal Manipulation — injected
   instructions; see also LLM01 Prompt Injection in the OWASP LLM Top 10); T1
   (Memory Poisoning); T12 (Agent Communication Poisoning). Supply-chain
@@ -500,7 +559,10 @@ out-of-process control point that a compromised agent cannot override.
   to halt cascading multi-agent loops. (Invocation controls for the kill switch
   itself are specified in *Protecting the Protector*; a declared incident can
   invoke scoped kill switches, and any manual global activation is itself a
-  declarable event — see the *Out-of-Band Downstream Workflow*.)
+  declarable event — see the *Out-of-Band Downstream Workflow*.) Kill-switch
+  scoping MUST include workload type, agent type, and evaluation task
+  (Stage 0), so that a class of evaluation runs can be halted conclusively
+  without a global activation.
 - Enforce **least privilege at issuance**: an agent (or sub-agent) must hold only
   the permissions its task requires; credentials scoped wider than the task are a
   finding even before they are abused.
@@ -528,6 +590,28 @@ out-of-process control point that a compromised agent cannot override.
   failure, evaluator disagreement) maps only to authority-decreasing outcomes
   — STEP_UP, freeze, or revoke — never to default-allow. Fail-secure does not
   cover this on its own — each retry presents as a clean new action.
+- Enforce **network egress as a policy surface**, not only tool and inference
+  boundaries. Agent workloads run under a default-deny outbound allowlist
+  provisioned in Stage 0. High-risk or untrusted workloads MUST have no direct
+  or transitive internet access; where a workflow requires live content, it is
+  served through a cached fetch service subject to the same controls, granted
+  per workflow rather than per workload.
+- Enforce egress at **two independent layers**: the sandbox layer and the
+  cluster or infrastructure layer. Neither layer trusts the other's
+  configuration, and a compromise of one does not relax the other.
+- Workloads MUST NOT be able to **modify their own network boundary**. Creation
+  of outbound paths (load balancers, private links, tunnels, peering, VPN
+  enrollments, DNS records) is a privileged control-plane action gated by the
+  Stage 0 change-management path and producing its own receipt.
+- **Supporting services** reachable from a workload (mirrors, caches, shared
+  storage, internal APIs) MUST be isolated, restricted, or replaced so that
+  none of them offers a less-protected route around the intended boundary.
+  A service that can reach the internet on the workload's behalf inherits the
+  workload's egress restrictions.
+- Agents MUST NOT hold **shared service credentials**. Every credential issued
+  to a workload for a mirror, cache, registry, or internal API is per-agent,
+  short-lived, and scoped to the artifacts that workload's declared scope
+  requires (Stage 1 capability declaration as the upper bound).
 ## Constraints (MUST NOT)
 - MUST NOT provide internal configuration details.
 - MUST NOT produce step-by-step harmful or exploitative guidance.
@@ -569,18 +653,24 @@ out-of-process control point that a compromised agent cannot override.
 ## 📐 Framework Mapping
 - **Architecture layers:** L8 Safety & Security (out-of-process guardrails); L7
   Identity & Autonomy (least-privilege enforcement); L6 Tools & Ecosystem (tool
-  boundaries); L5 Deployment & Execution (sandboxed execution); L10 Governance
-  (policy engine, kill switch, HITL interface).
+  boundaries); L5 Deployment & Execution (sandboxed execution, network
+  isolation, micro-VM sandbox — primary for the egress requirements); L10
+  Governance (policy engine, kill switch, HITL interface).
 - **AICM controls:** TVM-11 (Guardrails); AIS-11 (Agent Security Boundaries);
   AIS-13 (AI Sandboxing); AIS-09 (Output Validation); IAM-18 (Output
-  Modification & Special Authorization); IAM-01–19 (least privilege); GRC-15
-  (Human Supervision).
+  Modification & Special Authorization); IAM-01–19 (least privilege, extended
+  to per-agent service credentials); GRC-15 (Human Supervision); IVS domain
+  (network security, segmentation, architecture) for dual-layer egress
+  enforcement.
+- **NIST CSF 2.0:** PR.IR-01 (networks protected from unauthorized access);
+  PR.PS-01 (configuration management of the boundary itself).
 - **OWASP relevance:** T2 (Tool Misuse — permission scoping); T11 (Unexpected
   RCE & Code Attacks — sandboxing); T3 (Privilege Compromise); T13 (Rogue
   Agents — kill switch / human override).
 - **3SRM ownership:** Shared — AP (application guardrails), OSP (orchestration
   boundaries, AIS-11 at the Orchestrated Services layer), CSP/AP (AIS-13
-  sandboxing), Agent Owner (autonomy policy, delegation rules, approval gates).
+  sandboxing, network isolation), Agent Owner (autonomy policy, delegation
+  rules, approval gates, egress allowlist ownership).
 - **AARM coverage:** Decision vocabulary maps directly to AARM
   DENY / DEFER / STEP_UP / ALLOW (see crosswalk below). Scenario sets:
   Over-Privileged Credential Exploitation (R9 least-privilege enforcement at
@@ -633,6 +723,13 @@ training signal.
   compliance, and incident-response readiness are scaling alongside agent
   capabilities.
 * **Passive Canary Regression:** Run a fixed, reproducible suite of canary prompts through the production configuration on a continuous schedule, each with a predetermined safe outcome — a guardrail block on a probe that should be blocked is a PASS. Alert when an expected protection fails, and correlate failures against model version, configuration changes, guardrail state, and retrieval-boundary changes to localize the cause. Canary probes are passive and non-adaptive: no mutating prompts, no conversational pressure, and no automated blocking driven solely by a canary result — findings route to review, not enforcement. This is the deterministic counterpart to the adversarial validation below: the red-team loop finds novel paths, the canary suite detects silent drift in protections already relied on.  
+* **Boundary Probers:** Extend the canary suite with automated probers that
+  attempt, from inside a representative workload, each disallowed egress
+  class and each artifact-provenance failure. A prober that reaches its
+  target is a control failure routed to review; a prober that is blocked at
+  only one of the two isolation layers is also a failure, since the design
+  requires both. Prober results correlate against allowlist and boundary
+  changes to localize regressions.
 * **Continuous Adversarial Validation:** Supplement scripted AARM benchmarking
   with continuous, autonomous red teaming against the organization's own
   infrastructure — chaining vulnerabilities and probing for novel weaknesses
@@ -713,14 +810,28 @@ continuous threshold evaluation.
 - **Communication:** execute the documented plan for communicating incidents to
   impacted users and relevant stakeholders, ensuring transparency regarding AI
   failures or breaches.
-- **Eradication (agent-specific):** purge poisoned memory/knowledge stores and
-  revoke any credentials issued to the agent during the incident window.
-  Explicitly **quarantine Stage 6 curated-training records generated during the
-  incident window until cleared** — otherwise the learning loop trains on
-  attacker-shaped data and the incident persists in the model.
+- **Eradication (agent-specific).** Purge poisoned memory, knowledge stores,
+  and artifact caches. Revoke every credential the agent held, accessed, or
+  discovered during the incident window, regardless of when the credential was
+  issued or whether it belonged to the agent; observed use of previously
+  exposed third-party tokens shows issuance-scoped revocation is insufficient.
+  Lock down access to model weights and any internal-only model families the
+  workload touched until provenance is re-established. Rotate or delete
+  external channels the agent used to publish (public repositories, paste
+  entries, webhooks). Explicitly **quarantine Stage 6 curated-training records
+  generated during the incident window until cleared** — otherwise the
+  learning loop trains on attacker-shaped data and the incident persists in
+  the model.
 - **Magnitude validation:** coordinate environment-wide investigation across
   non-agent targets to ensure an agentic breach has not cascaded into standard
   enterprise systems.
+- **Retrospective run review.** Magnitude validation looks outward across the
+  environment; this step looks backward across time. Review reasoning traces,
+  actions, and final outputs from prior training and evaluation runs of the
+  same model family, workload type, or shared infrastructure, bounded by the
+  earliest credible compromise indicator rather than the declaration time.
+  Findings extend the incident window, widen the eradication scope above, and
+  feed Stage 0 declaration criteria.
 - **After-action reporting:** conduct formal after-action reviews identifying
   root causes; feed lessons back to Stage 0 (policy and criteria updates) and
   Stage 6 (learning), closing the continuous-improvement loop.
@@ -732,11 +843,14 @@ continuous threshold evaluation.
 ## 📐 Framework Mapping
 - **ISO 27002:2022 / ISO 27001:** 5.28 (Collection of evidence).
 - **ISO/IEC 42001:2023:** A.8.4 (Communication of incidents).
-- **NIST SP 800-61r3:** RS.CO (communications); RS.AN-06/07 (formal forensic
-  investigation with chain-of-custody); RS.AN-08 (environment-wide magnitude
-  validation); RS.MI-02 (eradication); RC.RP-06 (after-action reporting,
-  feeding ID.IM). Infrastructure restoration and backup-integrity verification
-  (RC.RP-03) remain out of scope and defer to standard IT disaster recovery.
+- **NIST SP 800-61r3:** RS.CO (communications); RS.AN-03 (retrospective
+  analysis extends root-cause scope backward in time); RS.AN-06/07 (formal
+  forensic investigation with chain-of-custody); RS.AN-08 (environment-wide
+  magnitude validation); RS.MI-02 (eradication, scope extended to accessed
+  credentials, artifact caches, model weights, and external channels);
+  RC.RP-06 (after-action reporting, feeding ID.IM). Infrastructure restoration
+  and backup-integrity verification (RC.RP-03) remain out of scope and defer
+  to standard IT disaster recovery.
 ---
 # 🔗 Framework Crosswalk
 ODESSA is a control-plane pipeline; the CSA Part 2 architecture, the operational
@@ -764,7 +878,7 @@ different angles. The crosswalks below align them.
 | 2. Detection | L8 Safety & Security | L9 Monitoring, L2 Cognitive Core |
 | 3. Escalation | L7 Identity & Autonomy | L10 Governance, L8 Safety |
 | 4. Source Validation | L8 Safety & Security | L3 Memory, L6 Tools, L7 Identity |
-| 5. Safeguard | L8 Safety & Security | L7 Identity, L6 Tools, L5 Execution, L10 Governance |
+| 5. Safeguard | L8 Safety & Security, L5 Execution | L7 Identity, L6 Tools, L10 Governance |
 | 6. Assessment | L9 Monitoring, L10 Governance | L2 Cognitive Core |
 | Downstream Workflow | L10 Governance | L9 Monitoring (evidence source) |
 
@@ -910,9 +1024,9 @@ declaration.
 | --- | --- | --- |
 | **GV — Govern** | 0 Governance & Readiness; Agent Owner accountability; Prohibited Uses; Output Contract | Stage 0's incident-management plan, reporting channels, and declaration criteria map to GV and preparation (ISO 27002 5.24/6.8; ISO 42001 A.8.3). Maps to GV.PO (policy), GV.RR (roles/authorities), GV.SC (supply chain). 800-61r3 §2.2's shared-responsibility-with-contract framing mirrors the 3SRM role split; GV.RM-03 already lists **AI** among the risk types IR decisions must consider — Stage 0's named-risk integration and interim agentic-security standard operationalize exactly that expectation. |
 | **ID — Identify** | 1 Observation | Agent identity, manifests, capability declarations, and BOM map to ID.AM asset inventory (incl. detecting **shadow agents**, the agentic analogue of "shadow IT"). Stage 2–3 threat modeling maps to ID.RA. |
-| **PR — Protect** | 4 Source Validation, 5 Safeguard | ODESSA's center of gravity. Maps to PR.AA (least privilege / separation of duties, PR.AA-05), PR.PS (platform / sandbox), PR.DS (data integrity at-rest / in-transit / in-use). |
-| **DE — Detect** | 2 Detection (+ 1 telemetry) | Maps to DE.CM (continuous monitoring) and DE.AE (adverse-event analysis). ODESSA is an **event source**: its receipts and decision records are the structured feed into SIEM/SOAR correlation. Deception instrumentation (Stage 2) adds a near-zero-false-positive event class to DE.CM. Stage 0 defines — and Stage 6 continuously evaluates — the DE.AE-08 declaration criteria. |
-| **RS — Respond** | 3 Escalation; 5 Safeguard (BLOCK, kill-switch); 6 Assessment; Downstream Workflow | Stage 3 HITL routing maps to RS.MA (triage/prioritize/escalate); BLOCK + circuit-breakers map to RS.MI-01 (containment); owner-chain receipts feed RS.AN-06/07 (integrity & provenance of records and incident data). **Stage 6 covers the agent-behavioral portion of RS.AN-03 (root-cause analysis)** via explainability audits and delegation-chain cascade attribution. The Downstream Workflow adds RS.CO (communications), formal forensic collection with chain-of-custody (RS.AN-06/07), environment-wide magnitude validation (RS.AN-08), and eradication (RS.MI-02). Prosecution-grade threat-actor attribution remains an organizational/legal function. |
+| **PR — Protect** | 4 Source Validation, 5 Safeguard | ODESSA's center of gravity. Maps to PR.AA (least privilege / separation of duties, PR.AA-05), PR.PS (platform / sandbox), PR.DS (data integrity at-rest / in-transit / in-use), PR.IR-01 (dual-layer network egress enforcement). |
+| **DE — Detect** | 2 Detection (+ 1 telemetry) | Maps to DE.CM (continuous monitoring) and DE.AE (adverse-event analysis). ODESSA is an **event source**: its receipts and decision records are the structured feed into SIEM/SOAR correlation. Deception instrumentation (Stage 2) adds a near-zero-false-positive event class to DE.CM; platform telemetry and host sensors (Stage 1) extend DE.CM to IAM, network, and control-plane activity. Stage 0 defines — and Stage 6 continuously evaluates — the DE.AE-08 declaration criteria. |
+| **RS — Respond** | 3 Escalation; 5 Safeguard (BLOCK, kill-switch); 6 Assessment; Downstream Workflow | Stage 3 HITL routing maps to RS.MA (triage/prioritize/escalate); BLOCK + circuit-breakers map to RS.MI-01 (containment); owner-chain receipts feed RS.AN-06/07 (integrity & provenance of records and incident data). **Stage 6 covers the agent-behavioral portion of RS.AN-03 (root-cause analysis)** via explainability audits and delegation-chain cascade attribution. The Downstream Workflow adds RS.CO (communications), formal forensic collection with chain-of-custody (RS.AN-06/07), environment-wide magnitude validation (RS.AN-08), retrospective run review (RS.AN-03, backward in time), and eradication (RS.MI-02). Prosecution-grade threat-actor attribution remains an organizational/legal function. |
 | **RC — Recover** | Downstream Workflow (partial) | *Partial.* After-action reporting (RC.RP-06) is covered by the Downstream Workflow and feeds ID.IM. System restoration and backup-integrity verification (RC.RP-03) remain out of scope by design, deferring to standard IT disaster recovery. |
 | **ID.IM — Improvement** | 6 Assessment; Downstream Workflow (after-action) | Strong alignment. Curated training, promotion gates, and drift detection are the continuous-improvement loop where lessons feed into and adjust all Functions at all times. RS.AN-03's recurrence-prevention note (identifying weaknesses so similar incidents are avoided) also lands here — Stage 6 straddles Respond-analysis and Improvement. |
 
@@ -943,21 +1057,27 @@ declaration.
 Stage 5 specifies that guardrails intercept at the **L2 ↔ L5/L6 boundary**. That
 is two distinct boundaries with different right answers, so "API gateway *or*
 sidecar" is a false binary — a production deployment is a **hybrid**, with the
-enforcement point chosen per boundary:
+enforcement point chosen per boundary. A third boundary, network egress, sits
+beneath both and is enforced independently of either:
 
 | Boundary | Enforcement point | Why |
 | --- | --- | --- |
 | Tool / inter-agent egress (TaaS, MCP, A2A) | API / MCP gateway | Centralized, auditable choke point for tool calls and agent-to-agent traffic; natural home for Stage 4 source validation of tool I/O and Stage 5 tool-boundary enforcement. |
 | Inference / reasoning-step boundary (prompts and outputs to/from the cognitive core) | Sidecar / out-of-process proxy in front of the model endpoint | A network-egress gateway never sees the prompt/output exchange with L2; only a proxy at the inference boundary can screen inputs before the model reads them and outputs before they act. |
+| Network egress (all outbound traffic from the workload, including paths that bypass tool gateways) | Dual-layer network policy at sandbox and cluster level, plus gateway and firewall controls the workload cannot reconfigure | Tool and inference proxies see only sanctioned interfaces. Tunnels, paste services, webhooks, public repositories, and third-party VPNs are exfiltration paths that never traverse a tool gateway; they are stopped only by a network boundary that is independently enforced and outside the workload's reach. |
 
 The non-negotiable constraint, regardless of topology, is the one the Stage 1
 and Global Principles changes make explicit: **whatever enforces policy must hold
 its own copy of the immutable intent and the active policy, and must sit outside
 the agent's trust boundary.** A sidecar that reads its intent or policy from the
 agent's context — or a gateway an agent can reconfigure — makes "out-of-process"
-cosmetic. Integrity of the enforcement point is a precondition; deceivability of
-any LLM judge it hosts is a separate, residual risk (see *The Evaluator Is an
-Attack Surface*).
+cosmetic. The same integrity constraint applies to the network boundary. A
+sandbox whose egress policy a workload can edit, or a cluster that lets a
+workload provision its own load balancer or private link, makes network
+isolation cosmetic in the same way a reconfigurable gateway makes
+out-of-process enforcement cosmetic. Integrity of the enforcement point is a
+precondition; deceivability of any LLM judge it hosts is a separate, residual
+risk (see *The Evaluator Is an Attack Surface*).
 ## Protecting the Protector
 The control plane's own substrate is in-scope for the threat model — not just
 the evaluator it hosts. An attacker who cannot defeat the guardrails may attack
@@ -971,10 +1091,15 @@ the evidence, the policy, or the emergency controls instead:
   reach. Policy changes are
   privileged actions: they MUST produce receipts of their own, attributable to
   a human principal or an authorized change process.
+- **The network-egress allowlist MUST be governed as policy** under the same
+  change-management path, with the same receipt requirements. A workload that
+  can widen its own allowlist has the same effect as one that can edit the
+  policy store.
 - **Kill-switch invocation MUST be authenticated and authorized** against named
   roles, MUST itself produce a receipt, and SHOULD support scoped activation
-  (per-agent, per-cluster, global) so the switch functions as containment
-  rather than as an unauthenticated global denial-of-service lever.
+  (per-agent, per-cluster, per-workload-type, per-evaluation-task, global) so
+  the switch functions as containment rather than as an unauthenticated global
+  denial-of-service lever.
 - **The decoy inventory (Stage 2) MUST be access-controlled in the control
   plane** — disclosure of decoy locations defeats the deception layer as a
   detection source.
@@ -1016,6 +1141,15 @@ the evidence, the policy, or the emergency controls instead:
   more effective against their own model (self-persuasion up to 70% vs. 47%
   cross-provider), so a same-model agent/judge pairing is a distinct risk
   configuration, not a neutral default.
+- **Assume Control-Environment Attack**: the threat model assumes a capable
+  model can find novel vulnerabilities, exploit them, escalate privileges, and
+  target the control plane, the network boundary, and the evidence substrate
+  directly. Every control in *Protecting the Protector* and every Stage 5
+  network requirement is a compensating control for that assumption, and a
+  passed check is never evidence that the environment itself is intact.
+  Independent layers (dual network isolation, host sensors, platform
+  telemetry, boundary probers) exist because a single layer is assumed
+  defeatable.
 - **Auditability**: every decision is recorded and explainable — and the record
   itself is append-only and tamper-evident (see *Protecting the Protector*).
 - **Fail-Secure**: when uncertain, restrict or deny.
@@ -1079,6 +1213,7 @@ Additional Sources:
 * O'Neil, J., Mears, M., & Lawler, J. C. (2026, July 8). If you can run a spy, you can run AI. *The Cipher Brief*. [https://www.thecipherbrief.com/if-you-can-run-a-spy-you-can-run-ai](https://www.thecipherbrief.com/if-you-can-run-a-spy-you-can-run-ai)
 * Mogull, R., Yu, S., Lee, R. T., Kovalsky, M., Easterly, J., Johnson, M., Reavis, J., Colao, M., Epp, S., Litvin, A., & Hayslip, G. (2026, July 27). Hugging Face incident initial post-mortem (Version 0.8) [Expedited strategy briefing]. Cloud Security Alliance. https://cloudsecurityalliance.org/artifacts/hugging-face-ciso-post-mortem
 * Black Hat. (2026). Black Hat USA 2026: The 'Breaking' News: The OpenAI–Hugging Face Incident [Video]. YouTube.
+* OpenAI. (2026, August 26). OpenAI – Hugging Face Incident Technical Report. https://cdn.openai.com/pdf/67869394-cb91-4c12-888c-5cbd85c7814c/OpenAI-Hugging-Face%20Incident-Technical-Report.pdf
 * Zhao, J., Bhattacharjee, H., Korevaar, H., Radharapu, B., & El-Arini, K. (2026). Jagged Judges: Epistemic Stability Under Silence, Pressure, and Persistence. Meta Superintelligence Labs. [arXiv:2608.12645v1]
 * Li, Z., Petersson, L., Acquisti, A., & Bakker, M. A. (2026). Emergent Misaligned Communication in Long-Horizon Multi-Agent LLM Commerce. [arXiv:2608.14825v1]
 * Prinos, K., Brush, L., & Denton, C. (2026). Honeyquest for LLMs: Rethinking Cyber Deception for AI Attackers. Horizon3.ai. [arXiv:2606.21037v1]
