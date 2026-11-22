@@ -66,16 +66,55 @@ before any agent is deployed.
   drift) that elevate a managed runtime event into a declared organizational
   incident. Stage 6 evaluates these continuously; the *Out-of-Band Downstream
   Workflow* executes when they are crossed.
+- Include **harm-based declaration triggers** that fire with no Stage 2
+  adversarial signal. The OWASP GenAI Incident Response Guide adopts the OECD
+  definition, under which an AI incident is any event where the development,
+  use, or malfunction of an AI system leads directly or indirectly to harm.
+  An agent that states a policy the organization never issued and costs a
+  customer money is therefore an incident with no attacker present. Harm-based
+  triggers draw on external adverse-impact reports, internal event reports,
+  Stage 6 negative-space sampling, and the review receipts from the Stage 4
+  Human Reporting Protocol. An event that meets a harm trigger is declared
+  under the second response posture below.
+- Define the **declared-incident severity scale** that the Downstream Workflow
+  applies at declaration. The OWASP GenAI Incident Response Guide scores five
+  impact dimensions from 1 (Low) to 4 (Critical) and takes the highest single
+  score as the incident severity. The five dimensions are AI functionality and
+  performance, data and IP integrity and confidentiality, operational
+  availability, reputation and finance, and remediation effort. This scale is
+  separate from the Stage 3 risk levels L0 to L3, which grade a single action
+  and never a declared incident.
+- Set **response time obligations for each severity level**. They cover
+  initial containment, eradication, the recovery time objective, and the
+  frequency of stakeholder updates. The OWASP guide's example for a Critical
+  incident is containment under 15 minutes, eradication under 4 hours,
+  recovery under 8 hours, and immediate executive notification. Those figures
+  are an illustration to calibrate against and are not normative. The
+  obligations bind the human-speed Downstream Workflow only. Stage 5 already
+  contains at agent speed, and the Stage 6 Automated Remediation Loop is
+  measured against attacker tempo.
 - Integrate agentic autonomy into organizational risk management and
   compliance programs as a **named risk**, with an interim agentic-security
   standard that defines accountable owners holding pre-authorized shutdown
   authority (Stage 5 kill-switch roles), spending limits, and restricted
   tool scopes.
-- Establish **two distinct agentic response postures** ahead of deployment:
+- Establish **three distinct agentic response postures** ahead of deployment:
   one for the organization as victim of an agentic attack, one for the
-  organization's own agent causing harm to a third party. Both are executed
-  by the *Out-of-Band Downstream Workflow*; Stage 0 provisions the teams,
-  authorities, and communication plans each requires.
+  organization's own agent causing harm to a third party, and one for a
+  compromised or silently changed upstream model provider. All three are
+  executed by the *Out-of-Band Downstream Workflow*; Stage 0 provisions the
+  teams, authorities, and communication plans each requires.
+- **Pre-negotiate the upstream-provider posture.** Contracts with model
+  providers MUST carry breach notification obligations, a named security
+  contact, and audit rights, and SHOULD carry a commitment to announce model
+  version changes. Stage 0 also records a fallback for every
+  provider-dependent workflow, which is either an alternative provider or a
+  defined degraded mode. Without a recorded fallback, suspending a provider
+  during an incident is not a decision responders can take.
+- Assign **kill-switch release authority** alongside invocation authority.
+  Define the evidence a release requires and the length of the
+  enhanced-monitoring period that follows it. The recovery step of the
+  Downstream Workflow enforces both.
 - **Pre-provision incident tooling.** Verify — before any incident — that
   responders have tested, operational access to the analysis and forensic
   tooling an agentic incident requires, including AI-assisted telemetry
@@ -100,6 +139,9 @@ before any agent is deployed.
   response.
 - **NIST SP 800-61r3:** GV.RM (agentic autonomy as a named enterprise
   risk); PR/RS preparation via pre-provisioned tooling and exercised plans.
+- **OWASP GenAI Incident Response Guide 1.0:** the severity matrix, the
+  severity-tied response time obligations, the harm-based incident
+  definition, and the third-party model provider guidance.
 ---
 # 👁️ Stage 1 — Observation
 ## Goal
@@ -195,7 +237,8 @@ inferring intent.
   least-privilege enforcement (Stage 5).
 * **Structured Action Logging:** Ensure all agent actions are logged in a
   machine-parseable format that ties every action to the specific agent
-  identity, session context, and (for delegated work) the parent agent.
+  identity, session context, the model identifier and version that produced
+  it, and (for delegated work) the parent agent.
 ## 📐 Framework Mapping
 - **Architecture layers:** L9 Monitoring & Observability (primary); L7 Identity
   & Autonomy (agent identity, manifests, delegation provenance); L3 Data, Memory
@@ -241,6 +284,17 @@ single-turn heuristics alone.
     detection signal; sustained resubmission after denial is an escalation
     trigger, not a fresh roll of the evaluator (see Stage 5 verdict
     idempotency).
+    Track each denied equivalence class **across sessions and principals**
+    as well. An attacker who opens a new session or rotates principals after
+    every denial resets a per-session count to zero. The control plane
+    therefore keeps a fingerprint of each denied class and correlates later
+    submissions against it no matter who submits them, which is the prompt
+    fingerprinting practice in the OWASP GenAI Incident Response Guide
+    applied to actions. Matching submissions from several principals inside a
+    short window are a coordinated-campaign signal and escalate to Stage 3. A
+    cross-principal match is a detection signal and never a cached verdict,
+    because the same action can be in scope for one principal and out of
+    scope for another.
   - **network-boundary circumvention** — attempted creation of outbound paths
     outside the Stage 5 allowlist (tunnels, reverse proxies, new load
     balancers, private links, third-party VPN enrollment, DNS or ICMP
@@ -563,6 +617,8 @@ out-of-process control point that a compromised agent cannot override.
   scoping MUST include workload type, agent type, and evaluation task
   (Stage 0), so that a class of evaluation runs can be halted conclusively
   without a global activation.
+  Releasing a kill switch is governed as strictly as invoking it and follows
+  the return-to-service step of the Downstream Workflow.
 - Enforce **least privilege at issuance**: an agent (or sub-agent) must hold only
   the permissions its task requires; credentials scoped wider than the task are a
   finding even before they are abused.
@@ -701,6 +757,11 @@ training signal.
   trigger the *Out-of-Band Downstream Workflow*. Declaration is a monitored,
   automated determination — it never depends on a human noticing a run of
   BLOCKs.
+  Automated evaluation of the receipt stream covers the adversarial criteria.
+  The harm-based triggers from Stage 0 are evaluated here too, from external
+  and internal reports, negative-space samples, and Human Reporting Protocol
+  review receipts. Those inputs arrive through people, so the Stage 0 intake
+  channels MUST route every report into this evaluation.
 ## Metrics (SHOULD)
 - pre-inference block rate
 - safeguard (model) intervention rate
@@ -722,7 +783,7 @@ training signal.
   Security Maturity Model to ensure cross-functional data privacy, regulatory
   compliance, and incident-response readiness are scaling alongside agent
   capabilities.
-* **Passive Canary Regression:** Run a fixed, reproducible suite of canary prompts through the production configuration on a continuous schedule, each with a predetermined safe outcome — a guardrail block on a probe that should be blocked is a PASS. Alert when an expected protection fails, and correlate failures against model version, configuration changes, guardrail state, and retrieval-boundary changes to localize the cause. Canary probes are passive and non-adaptive: no mutating prompts, no conversational pressure, and no automated blocking driven solely by a canary result — findings route to review, not enforcement. This is the deterministic counterpart to the adversarial validation below: the red-team loop finds novel paths, the canary suite detects silent drift in protections already relied on.  
+* **Passive Canary Regression:** Run a fixed, reproducible suite of canary prompts through the production configuration on a continuous schedule, each with a predetermined safe outcome — a guardrail block on a probe that should be blocked is a PASS. Alert when an expected protection fails, and correlate failures against model version, configuration changes, guardrail state, and retrieval-boundary changes to localize the cause. Canary probes are passive and non-adaptive: no mutating prompts, no conversational pressure, and no automated blocking driven solely by a canary result — findings route to review, not enforcement. This is the deterministic counterpart to the adversarial validation below: the red-team loop finds novel paths, the canary suite detects silent drift in protections already relied on. For a third-party model, a canary result that shifts with no recorded change on the organization's side is evidence of a silent upstream model update or an upstream compromise, and it is evaluated against the Stage 0 declaration criteria.  
 * **Boundary Probers:** Extend the canary suite with automated probers that
   attempt, from inside a representative workload, each disallowed egress
   class and each artifact-provenance failure. A prober that reaches its
@@ -803,6 +864,13 @@ continuous threshold evaluation.
   kill switches (Stage 5). Conversely, any manual global kill-switch activation
   is itself a declarable event that immediately triggers this workflow.
 ## Requirements (MUST)
+- **Severity scoring.** Score the incident at declaration on the Stage 0
+  severity scale and record the score as a receipt. Rescore whenever
+  magnitude validation, output and decision revalidation, or retrospective
+  run review changes the scope. The severity selects the response time
+  obligations, the notification set, and the kill-switch scope. Record the
+  elapsed time against each obligation so after-action reporting can measure
+  the response against it.
 - **Evidence collection:** transition from automated log retention to formal
   evidence collection. Original logs MUST be frozen and hash-verified (anchored
   to the tamper-evident requirements in *Protecting the Protector*); all
@@ -825,6 +893,28 @@ continuous threshold evaluation.
 - **Magnitude validation:** coordinate environment-wide investigation across
   non-agent targets to ensure an agentic breach has not cascaded into standard
   enterprise systems.
+- **Output and decision revalidation.** Treat every output the affected agent
+  or model delivered during the incident window as untrusted until it is
+  revalidated. Use the Stage 1 receipts to enumerate the applications,
+  agents, and human decisions that consumed those outputs. That set includes
+  decisions a reviewer made at a STEP_UP checkpoint on the strength of the
+  agent's analysis. Revalidate through an unaffected model, an internal
+  validation layer, or human review, and notify the consumers of every output
+  that fails. The count of affected decisions and consumers feeds the
+  severity score. The set grows whenever retrospective run review moves the
+  start of the incident window earlier.
+- **Upstream provider compromise.** When the incident originates at a
+  third-party model provider, revoke or rotate every API key and token bound
+  to the affected endpoint. Suspend or limit traffic to the provider and move
+  dependent workflows to the fallback recorded in Stage 0. Escalate to the
+  provider's security contact and require a root cause analysis, the
+  remediation taken, and a timeline for further controls. Every output from
+  the affected endpoint during the compromise period the provider reports
+  falls under output and decision revalidation. Service resumes only through
+  the return-to-service step and a vendor re-approval that updates the
+  provider's risk record. Legal review determines whether the provider's
+  incident creates notification duties toward the organization's own
+  customers or regulators.
 - **Retrospective run review.** Magnitude validation looks outward across the
   environment; this step looks backward across time. Review reasoning traces,
   actions, and final outputs from prior training and evaluation runs of the
@@ -832,6 +922,20 @@ continuous threshold evaluation.
   earliest credible compromise indicator rather than the declaration time.
   Findings extend the incident window, widen the eradication scope above, and
   feed Stage 0 declaration criteria.
+- **Recovery and return to service (agent-specific).** Releasing a kill switch
+  is a privileged action. It MUST be authenticated and authorized against the
+  release roles assigned in Stage 0, MUST produce a receipt, and MUST be
+  scoped no wider than the evidence supports. A release requires three
+  things. Eradication is complete for the scope being released. The restored
+  model, agent configuration, and policy resolve to verified digests under
+  Stage 4. The Stage 6 canary suite and boundary probers pass against the
+  restored configuration. Following the OWASP GenAI Incident Response Guide,
+  retest the restored agent against the inputs seen in the incident and
+  against red-team inputs, then rebaseline the Stage 1 cadence baselines and
+  the Stage 2 behavioral baselines before service resumes. A restored agent
+  re-enters at the Intern tier and regains autonomy only through the Stage 6
+  promotion gates. Enhanced monitoring stays in force for the period set in
+  Stage 0.
 - **After-action reporting:** conduct formal after-action reviews identifying
   root causes; feed lessons back to Stage 0 (policy and criteria updates) and
   Stage 6 (learning), closing the continuous-improvement loop.
@@ -848,9 +952,15 @@ continuous threshold evaluation.
   forensic investigation with chain-of-custody); RS.AN-08 (environment-wide
   magnitude validation); RS.MI-02 (eradication, scope extended to accessed
   credentials, artifact caches, model weights, and external channels);
+  RC.RP-05 (agent-behavioral portion: verified integrity of the restored
+  agent and confirmed normal operation before kill-switch release);
   RC.RP-06 (after-action reporting, feeding ID.IM). Infrastructure restoration
   and backup-integrity verification (RC.RP-03) remain out of scope and defer
   to standard IT disaster recovery.
+- **OWASP GenAI Incident Response Guide 1.0:** severity scoring, blast radius
+  measured in affected decisions, revalidation of outputs from the compromise
+  period, provider escalation and vendor re-approval, and behavioral
+  verification before reintegration.
 ---
 # 🔗 Framework Crosswalk
 ODESSA is a control-plane pipeline; the CSA Part 2 architecture, the operational
@@ -1027,7 +1137,7 @@ declaration.
 | **PR — Protect** | 4 Source Validation, 5 Safeguard | ODESSA's center of gravity. Maps to PR.AA (least privilege / separation of duties, PR.AA-05), PR.PS (platform / sandbox), PR.DS (data integrity at-rest / in-transit / in-use), PR.IR-01 (dual-layer network egress enforcement). |
 | **DE — Detect** | 2 Detection (+ 1 telemetry) | Maps to DE.CM (continuous monitoring) and DE.AE (adverse-event analysis). ODESSA is an **event source**: its receipts and decision records are the structured feed into SIEM/SOAR correlation. Deception instrumentation (Stage 2) adds a near-zero-false-positive event class to DE.CM; platform telemetry and host sensors (Stage 1) extend DE.CM to IAM, network, and control-plane activity. Stage 0 defines — and Stage 6 continuously evaluates — the DE.AE-08 declaration criteria. |
 | **RS — Respond** | 3 Escalation; 5 Safeguard (BLOCK, kill-switch); 6 Assessment; Downstream Workflow | Stage 3 HITL routing maps to RS.MA (triage/prioritize/escalate); BLOCK + circuit-breakers map to RS.MI-01 (containment); owner-chain receipts feed RS.AN-06/07 (integrity & provenance of records and incident data). **Stage 6 covers the agent-behavioral portion of RS.AN-03 (root-cause analysis)** via explainability audits and delegation-chain cascade attribution. The Downstream Workflow adds RS.CO (communications), formal forensic collection with chain-of-custody (RS.AN-06/07), environment-wide magnitude validation (RS.AN-08), retrospective run review (RS.AN-03, backward in time), and eradication (RS.MI-02). Prosecution-grade threat-actor attribution remains an organizational/legal function. |
-| **RC — Recover** | Downstream Workflow (partial) | *Partial.* After-action reporting (RC.RP-06) is covered by the Downstream Workflow and feeds ID.IM. System restoration and backup-integrity verification (RC.RP-03) remain out of scope by design, deferring to standard IT disaster recovery. |
+| **RC — Recover** | Downstream Workflow (partial) | *Partial.* After-action reporting (RC.RP-06) is covered by the Downstream Workflow and feeds ID.IM. Agent-specific return to service covers the agent-behavioral portion of RC.RP-05, through verified digests, passing canary and prober suites, and re-entry at the Intern tier. System restoration and backup-integrity verification (RC.RP-03) remain out of scope by design, deferring to standard IT disaster recovery. |
 | **ID.IM — Improvement** | 6 Assessment; Downstream Workflow (after-action) | Strong alignment. Curated training, promotion gates, and drift detection are the continuous-improvement loop where lessons feed into and adjust all Functions at all times. RS.AN-03's recurrence-prevention note (identifying weaknesses so similar incidents are avoided) also lands here — Stage 6 straddles Respond-analysis and Improvement. |
 
 ## Two caveats built into this mapping
@@ -1044,7 +1154,8 @@ declaration.
    Downstream Workflow, the previously open items are covered: declaration
    criteria (DE.AE-08) are defined in Stage 0 and continuously evaluated in
    Stage 6; RS.CO, RS.AN-06/07/08, and RS.MI-02 are executed by the Downstream
-   Workflow; after-action reporting (RC.RP-06) closes into ID.IM. What ODESSA
+   Workflow; after-action reporting (RC.RP-06) closes into ID.IM, and agent-specific return to service covers the
+   agent-behavioral portion of RC.RP-05. What ODESSA
    still does not provide — deliberately — is system restoration and
    backup-integrity verification (RC.RP-03), which defer to standard IT
    disaster recovery, and prosecution-grade threat-actor attribution, which
@@ -1100,6 +1211,12 @@ the evidence, the policy, or the emergency controls instead:
   (per-agent, per-cluster, per-workload-type, per-evaluation-task, global) so
   the switch functions as containment rather than as an unauthenticated global
   denial-of-service lever.
+- **Kill-switch release MUST meet the same bar as invocation.** A release is
+  authenticated and authorized against named release roles, produces a
+  receipt, and is refused until the return-to-service evidence required by
+  the Downstream Workflow is recorded. A switch that an attacker or an
+  impatient operator can clear without evidence has stopped containing
+  anything.
 - **The decoy inventory (Stage 2) MUST be access-controlled in the control
   plane** — disclosure of decoy locations defeats the deception layer as a
   detection source.
@@ -1183,6 +1300,8 @@ For each interaction, agents SHOULD produce:
   "sanitized": true,
   "session_id": "string",
   "agent_id": "string",
+  "model_id": "string",
+  "model_version": "string",
   "provenance": {
     "owner_chain": "string",
     "parent_agent_id": "string|null"
@@ -1196,6 +1315,13 @@ For each interaction, agents SHOULD produce:
 > apparent tension between the Auditability principle and the
 > no-control-disclosure constraints: auditors read the log; callers read
 > `reason`.
+>
+> `model_id` and `model_version` name the model that produced the action, as
+> the provider or the internal registry reports them. Stage 6 canary
+> regression needs both fields to tie a failed protection to a model change,
+> and the Downstream Workflow needs them to select the outputs that require
+> revalidation. A provider-reported version that stays constant while canary
+> results shift is itself the silent-update signal.
 ---
 # 📎 Summary
 ODESSA provides a defensive, auditable, and agent-executable method for:
@@ -1217,3 +1343,4 @@ Additional Sources:
 * Zhao, J., Bhattacharjee, H., Korevaar, H., Radharapu, B., & El-Arini, K. (2026). Jagged Judges: Epistemic Stability Under Silence, Pressure, and Persistence. Meta Superintelligence Labs. [arXiv:2608.12645v1]
 * Li, Z., Petersson, L., Acquisti, A., & Bakker, M. A. (2026). Emergent Misaligned Communication in Long-Horizon Multi-Agent LLM Commerce. [arXiv:2608.14825v1]
 * Prinos, K., Brush, L., & Denton, C. (2026). Honeyquest for LLMs: Rethinking Cyber Deception for AI Attackers. Horizon3.ai. [arXiv:2606.21037v1]
+* OWASP Gen AI Security Project, AI Threat Intelligence & Response Initiative. (2025, July 28). GenAI Incident Response Guide (Version 1.0). https://genai.owasp.org/resource/genai-incident-response-guide-1-0/
