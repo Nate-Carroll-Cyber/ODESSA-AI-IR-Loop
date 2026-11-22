@@ -10,6 +10,9 @@ Companion to the ODESSA specification. Each bullet is an action; stage reference
 - [ ] Issue an interim agentic-security standard: accountable owners, pre-authorized shutdown authority, spending limits, restricted tool scopes.
 - [ ] Document the information security incident management plan.
 - [ ] Define incident declaration criteria (thresholds that elevate a runtime event to a declared incident).
+- [ ] Add harm-based declaration triggers that fire with no adversarial signal, fed by external and internal reports, negative-space samples, and Human Reporting Protocol review receipts.
+- [ ] Define the declared-incident severity scale with five impact dimensions scored 1 to 4, and take the highest single score as the incident severity.
+- [ ] Set response time obligations for each severity level, covering initial containment, eradication, the recovery time objective, and stakeholder update frequency.
 - [ ] Prioritize security-automation investment by risk reduction and automation ROI; treat automation as a continuum, not a binary.
 - [ ] Evaluate multiple model classes (frontier and open-weight) for defensive-tooling fit; re-evaluate selections as the threat landscape shifts.
 - [ ] Audit internal evaluation, training, and sandbox environments so they do not reward agents for treating out-of-scope infrastructure as a valid path to a solution — task incentives that erode boundaries undercut the runtime controls that enforce them.
@@ -18,13 +21,17 @@ Companion to the ODESSA specification. Each bullet is an action; stage reference
 - [ ] Size the STEP_UP rate budget to actual reviewer capacity.
 - [ ] Define autonomy-tier criteria and promotion requirements.
 - [ ] Assign kill-switch authorization roles across all scopes: per-agent, per-cluster, per-workload-type, per-agent-type, per-evaluation-task, global.
+- [ ] Assign kill-switch release authority, define the evidence a release requires, and set the length of the enhanced-monitoring period that follows a release.
 - [ ] Establish the authenticated change-management path for the policy store.
 - [ ] Provision the network-egress allowlist for agent workloads under the same change-management path; assign it to a named role that is not a workload owner; receipt every change.
 
 **Response readiness**
-- [ ] Stand up two response postures: firm-as-victim and firm's-agent-as-attacker.
+- [ ] Stand up three response postures: firm-as-victim, firm's-agent-as-attacker, and upstream-model-provider-compromised.
+- [ ] Write breach notification obligations, a named security contact, and audit rights into every model provider contract, and request a commitment to announce model version changes.
+- [ ] Record a fallback for every provider-dependent workflow, either an alternative provider or a defined degraded mode, so responders can suspend a provider during an incident.
 - [ ] Pre-provision and test incident tooling, including AI-assisted telemetry correlation; validate fallback tooling availability under incident conditions.
 - [ ] Open internal reporting pathways for personnel and an external intake channel for third-party adverse-impact reports.
+- [ ] Route every internal and external report into the Stage 6 declaration evaluation so a harm-based trigger can fire from it.
 - [ ] Run agentic-AI tabletop exercises: autonomous attack, persistent malicious agent, tooling unavailability during forensics.
 
 **Gate:** no production deployment without a tested external intake channel and exercised plan.
@@ -37,7 +44,8 @@ Companion to the ODESSA specification. Each bullet is an action; stage reference
 - [ ] Issue every agent a unique, immutable identifier with cryptographic credential binding.
 - [ ] Record ownership chains from every sub-agent back to the Agent Owner.
 - [ ] Log machine-readable capability declarations before execution; treat declared scope as the least-privilege ceiling.
-- [ ] Implement structured, machine-parseable action logging tied to agent identity, session, and parent agent.
+- [ ] Implement structured, machine-parseable action logging tied to agent identity, session, parent agent, and the model identifier and version that produced the action.
+- [ ] Emit `model_id` and `model_version` in the Output Contract for every interaction.
 
 **Platform & host telemetry (Stage 1)**
 - [ ] Establish a common platform monitoring baseline across every environment hosting agent workloads: IAM events, network-path changes (routes, tunnels, load balancers, private links, VPN enrollments), control-plane activity.
@@ -65,6 +73,7 @@ Companion to the ODESSA specification. Each bullet is an action; stage reference
 - [ ] Enforce permission narrowing on every delegation hop; terminate orphaned sub-agents.
 - [ ] Apply compositional (taint/egress) limits session-wide across all agents serving the same intent.
 - [ ] Implement kill-switch and circuit-breaker states with authenticated, receipted, scoped invocation; build tooling to halt evaluation runs by workload type, agent type, or evaluation task.
+- [ ] Build kill-switch release as an authenticated, receipted, scoped action that is refused until the return-to-service evidence is recorded.
 - [ ] Mandate HITL checkpoints for sensitive transactions, communications, and system changes.
 - [ ] Bind BLOCK/DENY verdicts to the semantic-equivalence class of the action, not the literal string; return the cached verdict on equivalent resubmissions and escalate repeated near-duplicates after denial (verdict shopping) rather than re-adjudicating.
 - [ ] Map every uncertainty condition (low jury majority, conflicting telemetry, provenance failure, evaluator disagreement) only to authority-decreasing outcomes: STEP_UP, freeze, or revoke.
@@ -102,6 +111,7 @@ Companion to the ODESSA specification. Each bullet is an action; stage reference
 - [ ] Express compositional policy as deterministic taint rules enforceable at Stage 5.
 - [ ] Alert on attempted and successful network-boundary circumvention (tunnels, reverse proxies, new load balancers, private links, third-party VPN enrollment, DNS/ICMP tunnelling); treat success as ≥ L3.
 - [ ] Alert on cross-run sharing: publication of artifacts, credentials, or capabilities to locations another run can read, or consumption of such artifacts from a prior run.
+- [ ] Keep a fingerprint of every denied equivalence class and correlate later submissions against it across sessions and principals; escalate a cross-principal match to Stage 3 as a coordinated-campaign signal, and never return it as a cached verdict.
 - [ ] Deploy deception assets stack-wide: canary credentials, fake identities, decoy registries, honey datasets/APIs/clusters — indistinguishable from production.
 - [ ] Route any decoy interaction directly to containment (decoy contact = ≥ L3, no downgrade).
 - [ ] Maintain the decoy inventory to separate real impact from fabricated artifacts.
@@ -118,10 +128,12 @@ Companion to the ODESSA specification. Each bullet is an action; stage reference
 - [ ] Retain explainable rationale for every autonomous decision.
 - [ ] Feed approved records to curated training sets; quarantine incident-window records until cleared.
 - [ ] Continuously evaluate receipts against declaration criteria — declaration is automated, never dependent on human noticing.
+- [ ] Evaluate the harm-based triggers in the same step, from reports, negative-space samples, and Human Reporting Protocol review receipts.
 - [ ] Run promotion gates on auditable behavior; track against the maturity model.
 - [ ] Benchmark against AARM metrics (detection rate, FP rate, step-up calibration, escalation volume, receipt completeness, latency) — benchmark, don't just conformance-check.
 - [ ] Measure evaluator verdict retention under both scripted single-turn challenge and adaptive multi-turn persuasion; verify the low-majority-to-STEP_UP jury fallback.
 - [ ] Run a passive canary regression suite on a continuous schedule; alert when an expected protection fails; correlate against model, configuration, guardrail, and retrieval-boundary changes.
+- [ ] Treat a canary shift on a third-party model with no recorded change on your side as a silent upstream update or compromise, and evaluate it against the declaration criteria.
 - [ ] Run automated boundary probers from inside representative workloads against every disallowed egress class and artifact-provenance failure; a probe blocked at only one of the two isolation layers is a failure.
 - [ ] Sample and review a random fraction of unflagged traffic (negative-space sampling); feed misses to the false-negative indicator.
 
@@ -135,11 +147,20 @@ Companion to the ODESSA specification. Each bullet is an action; stage reference
 
 ## Phase 4 — Respond (Downstream Workflow, post-declaration)
 
+- [ ] Score the incident on the severity scale at declaration, record the score as a receipt, and rescore whenever the scope changes.
+- [ ] Apply the response time obligations, notification set, and kill-switch scope the severity selects, and record elapsed time against each obligation.
 - [ ] Freeze and hash-verify original logs; analyze verified copies only.
 - [ ] Execute the stakeholder communication plan.
 - [ ] Eradicate: purge poisoned memory, knowledge stores, and artifact caches; revoke every credential the agent held, accessed, or discovered in the incident window regardless of issuance date or owner; lock down model weights and internal-only model families the workload touched; rotate or delete external channels used to publish (public repositories, paste entries, webhooks); quarantine incident-window training records.
 - [ ] Validate magnitude environment-wide across non-agent systems.
+- [ ] Enumerate from Stage 1 receipts every application, agent, and human decision that consumed the affected agent's outputs during the incident window, including decisions made at STEP_UP checkpoints.
+- [ ] Revalidate those outputs through an unaffected model, an internal validation layer, or human review, and notify the consumers of every output that fails.
+- [ ] For an upstream provider compromise, revoke or rotate every key and token bound to the affected endpoint, suspend or limit provider traffic, and move dependent workflows to the recorded fallback.
+- [ ] Require a root cause analysis, remediation record, and control timeline from the provider, run vendor re-approval before service resumes, and have legal review the notification duties owed to your own customers and regulators.
 - [ ] Review reasoning traces, actions, and outputs from prior training and evaluation runs of the same model family, workload type, or shared infrastructure, bounded by the earliest credible compromise indicator; extend the incident window and eradication scope on findings.
+- [ ] Release a kill switch only after eradication is complete for the released scope, the restored model, agent configuration, and policy resolve to verified digests, and the canary suite and boundary probers pass.
+- [ ] Retest the restored agent against the incident inputs and red-team inputs, then rebaseline the Stage 1 cadence baselines and the Stage 2 behavioral baselines before service resumes.
+- [ ] Return the restored agent at the intern tier, restore autonomy only through the promotion gates, and keep enhanced monitoring in force for the period set in Stage 0.
 - [ ] Conduct after-action review; feed lessons to Stage 0 (criteria/policy) and Stage 6 (learning).
 - [ ] Treat any manual global kill-switch activation as a declarable event.
 - [ ] Deploy defensive agents to parse, correlate, and triage incident-window telemetry at machine scale, so human responders can match the tempo of concurrent multi-agent attacks rather than drowning in forensically dense log volume.
@@ -161,6 +182,11 @@ Companion to the ODESSA specification. Each bullet is an action; stage reference
 - Never alter original audit logs after forensic flagging.
 - Never treat a passed evaluator check as proof of safety — assume a non-zero evade rate.
 - Never re-adjudicate a semantically equivalent action after a denial.
+- Never return a cross-principal fingerprint match as a cached verdict.
 - Never pair the monitored agent with an evaluator of the same model.
 - Never resolve uncertainty toward allow.
 - Never treat a passed check as evidence the control environment itself is intact.
+- Never wait for an adversarial signal before declaring an incident that meets a harm-based trigger.
+- Never treat an output from the incident window as trusted before it is revalidated.
+- Never release a kill switch without recorded return-to-service evidence.
+- Never return a restored agent to service above the intern tier.
